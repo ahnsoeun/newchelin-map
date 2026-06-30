@@ -102,7 +102,7 @@
         id: 'yong-samgyetang', name: '용삼계탕',
         category: 'restaurant', vol: 'Vol.01', issue: 8,
         oneLiner: '논현 영동시장 30년 노포, 몸이 먼저 아는 맛',
-        description: '매일 새벽 끓여내는 진한 국물과 통통한 닭이 핵심. 재료 소진 시 조기 마감.',
+        description: '논현 영동시장 골목 안에 30년 가까이 자리를 지켜온 삼계탕 전문점이에요. 복날이 아니어도 웨이팅이 있을 만큼 동네에서 인정받는 곳입니다. 서비스로 인삼주 한 잔이 나오는데, 삼계탕에 넣어 먹으면 이게 또 별미예요. 🍶',
         recommendedMenu: ['삼계탕', '반계탕', '서비스 인삼주'],
         address: '서울 강남구 학동로4길 8',
         hours: '월~토 11:00~20:30 / 일 휴무',
@@ -243,8 +243,7 @@
           <p className="text-[12px] text-gray-500 mt-0.5 leading-snug">{place.oneLiner}</p>
 
           {place.description && (
-            <p className="text-[11px] text-gray-400 mt-1.5 leading-relaxed"
-              style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            <p className="text-[11px] text-gray-400 mt-1.5 leading-relaxed">
               {place.description}
             </p>
           )}
