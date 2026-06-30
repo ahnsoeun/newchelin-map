@@ -243,7 +243,8 @@
           <p className="text-[12px] text-gray-500 mt-0.5 leading-snug">{place.oneLiner}</p>
 
           {place.description && (
-            <p className="text-[11px] text-gray-400 mt-1.5 leading-relaxed">
+            <p className="text-[11px] text-gray-400 mt-1.5 leading-relaxed"
+              style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
               {place.description}
             </p>
           )}
