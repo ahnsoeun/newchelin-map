@@ -33,6 +33,13 @@
     .leaflet-popup-content-wrapper { border-radius: 12px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important; }
     .leaflet-popup-content { margin: 14px 16px !important; }
     .leaflet-container { font-family: 'Noto Sans KR', sans-serif !important; }
+    .app-root  { display: flex; flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; }
+    .map-wrap  { height: 40vh; flex-shrink: 0; }
+    @media (min-width: 768px) {
+      .app-root  { flex-direction: row; }
+      .map-wrap  { height: 100%; flex: 1; order: 2; min-width: 0; }
+      .sidebar-wrap { order: 1; width: 360px; flex-shrink: 0; height: 100%; display: flex; flex-direction: column; }
+    }
   </style>
 </head>
 <body>
@@ -217,9 +224,9 @@
         <div ref={cardRef} role="button" tabIndex={0} onClick={onClick}
           onKeyDown={e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); onClick(); } }}
           className={
-            'cursor-pointer rounded-xl border bg-white p-4 transition-all outline-none ' +
+            'cursor-pointer rounded-xl border-2 bg-white p-4 transition-all outline-none ' +
             (selected
-              ? 'border-l-4 border-l-[#FF6B35] border-y-gray-100 border-r-gray-100 bg-[#FFF4F0] nc-selected'
+              ? 'border-[#FF6B35] bg-[#FFF4F0] nc-selected'
               : 'border-gray-100 hover:bg-[#FFF4F0] hover:shadow-sm')
           }
         >
@@ -359,9 +366,9 @@
       return (
         <aside className="flex flex-col h-full bg-[#FAFAFA] border-r border-gray-200">
 
-          {/* 헤더 — 오렌지 배너 + 아이콘 */}
+          {/* 헤더 — 오렌지 배너 (모바일에서 숨김) */}
           <header className="flex-shrink-0 border-b border-gray-200">
-            <div className="px-5 pt-4 pb-5 flex flex-col items-center text-center"
+            <div className="hidden md:flex px-5 pt-4 pb-5 flex-col items-center text-center"
               style={{ background: '#FF6B35' }}>
               <img
                 src="소스/아이콘.png"
@@ -378,6 +385,15 @@
               <p style={{ color: 'rgba(255,255,255,0.82)', fontSize: 12, marginTop: 5 }}>
                 뉴 아이디가 제안하는, 믿을 수 있는 미식 큐레이션
               </p>
+            </div>
+
+            {/* 모바일 전용 미니 헤더 */}
+            <div className="flex md:hidden items-center gap-2 px-3 py-2" style={{ background: '#FF6B35' }}>
+              <img src="소스/아이콘.png" alt="뉴슐랭 아이콘"
+                style={{ width: 20, height: 20, filter: 'brightness(0) invert(1)' }} />
+              <span style={{ fontFamily: "'Poppins', sans-serif", color: '#fff', fontSize: 14, fontWeight: 400, letterSpacing: '0.06em' }}>
+                THE NEWCHELIN GUIDE
+              </span>
             </div>
 
             {/* 필터 */}
@@ -425,6 +441,12 @@
         return [...list].sort((a, b) => b.issue - a.issue);
       }, [filter]);
 
+      const counts = useMemo(() => ({
+        all:        PLACES.length,
+        restaurant: PLACES.filter(p => p.category === 'restaurant').length,
+        cafe:       PLACES.filter(p => p.category === 'cafe').length,
+      }), []);
+
       useEffect(() => {
         if (selectedId && !filtered.some(p => p.id === selectedId)) setSelectedId(null);
       }, [filtered, selectedId]);
@@ -439,17 +461,50 @@
       }, []);
 
       return (
-        <div className="flex flex-col md:flex-row" style={{ height: '100vh', width: '100vw', overflow: 'hidden' }}>
-          {/* 데스크톱: 왼쪽 사이드패널 */}
-          <div className="order-2 md:order-1 h-[50vh] md:h-full w-full md:w-[360px] flex-shrink-0 flex flex-col">
+        <div className="app-root">
+
+          {/* ── 모바일 전용 상단 헤더 (데스크톱 숨김) ── */}
+          <div className="md:hidden flex-shrink-0">
+            <div className="flex items-center gap-2 px-3 py-2" style={{ background: '#FF6B35' }}>
+              <img src="소스/아이콘.png" alt="뉴슐랭 아이콘"
+                style={{ width: 20, height: 20, filter: 'brightness(0) invert(1)' }} />
+              <span style={{ fontFamily: "'Poppins', sans-serif", color: '#fff', fontSize: 14, letterSpacing: '0.06em' }}>
+                THE NEWCHELIN GUIDE
+              </span>
+            </div>
+            <div className="flex gap-1.5 px-3 py-2 bg-white border-b border-gray-200">
+              <FilterTab active={filter==='all'}        onClick={() => setFilter('all')}>전체 {counts.all}</FilterTab>
+              <FilterTab active={filter==='restaurant'} onClick={() => setFilter('restaurant')}>🍚 맛집 {counts.restaurant}</FilterTab>
+              <FilterTab active={filter==='cafe'}       onClick={() => setFilter('cafe')}>☕ 카페 {counts.cafe}</FilterTab>
+            </div>
+          </div>
+
+          {/* ── 지도 (항상 렌더링, 모바일 40vh / 데스크톱 flex-1 full height) ── */}
+          <div className="map-wrap">
+            <MapView places={filtered} selectedId={selectedId} onSelectPlace={handleSelect} />
+          </div>
+
+          {/* ── 모바일: 카드 리스트 (데스크톱 숨김) ── */}
+          <div className="md:hidden flex-1 min-h-0 overflow-y-auto nc-scroll bg-[#FAFAFA] px-3 py-3 space-y-3">
+            {filtered.length === 0 ? (
+              <div className="text-center text-gray-400 text-sm py-12">해당 카테고리의 장소가 없습니다.</div>
+            ) : (
+              filtered.map(p => (
+                <PlaceCard key={p.id} place={p}
+                  selected={p.id === selectedId}
+                  onClick={() => handleSelect(p.id, 'card')}
+                  cardRef={el => { cardRefs.current[p.id] = el; }}
+                />
+              ))
+            )}
+          </div>
+
+          {/* ── 데스크톱: 왼쪽 사이드패널 (모바일 숨김) ── */}
+          <div className="sidebar-wrap hidden md:flex flex-col">
             <Sidebar
               places={filtered} filter={filter} setFilter={setFilter}
               selectedId={selectedId} onSelectPlace={handleSelect} cardRefs={cardRefs}
             />
-          </div>
-          {/* 데스크톱: 오른쪽 지도 */}
-          <div className="order-1 md:order-2 h-[50vh] md:h-full flex-1 min-w-0">
-            <MapView places={filtered} selectedId={selectedId} onSelectPlace={handleSelect} />
           </div>
         </div>
       );
