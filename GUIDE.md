@@ -85,6 +85,14 @@
 
 ---
 
-## 배포 방법 (필요 시)
-- **Vercel** 또는 **Netlify**에 폴더 드래그앤드롭 → 링크 자동 생성
-- 단일 HTML 파일이라 별도 빌드 과정 없음
+## 배포 정보
+- **라이브 URL**: https://newchelin-map.vercel.app
+- **GitHub**: https://github.com/ahnsoeun/newchelin-map
+- **호스팅**: Vercel (GitHub 연동, 자동 배포)
+
+## 업데이트 배포 방법
+index.html 수정 후 터미널에서:
+```
+cd /Users/ahnsoeun/Desktop/claude-workspace/newchelin-map && git add . && git commit -m "식당 추가" && git push
+```
+push 하면 Vercel이 자동으로 반영됩니다.
