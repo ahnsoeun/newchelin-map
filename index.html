@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>THE NEWCHELIN GUIDE MAP</title>
+
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Poppins:wght@400&display=swap" rel="stylesheet" />
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    html, body, #root { height: 100%; margin: 0; }
+    body { font-family: 'Noto Sans KR', sans-serif; background: #FAFAFA; }
+    .nc-scroll::-webkit-scrollbar { width: 6px; }
+    .nc-scroll::-webkit-scrollbar-thumb { background: #e5e5e5; border-radius: 4px; }
+    .nc-scroll::-webkit-scrollbar-thumb:hover { background: #ccc; }
+    @keyframes nc-pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(255,107,53,0.4); }
+      70%  { box-shadow: 0 0 0 8px rgba(255,107,53,0); }
+      100% { box-shadow: 0 0 0 0 rgba(255,107,53,0); }
+    }
+    .nc-selected { animation: nc-pulse 0.8s ease-out; }
+    .leaflet-popup-content-wrapper { border-radius: 12px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important; }
+    .leaflet-popup-content { margin: 14px 16px !important; }
+    .leaflet-container { font-family: 'Noto Sans KR', sans-serif !important; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef, useMemo, useCallback } = React;
+
+    const VOL_COLORS = {
+      'Vol.01': '#E74C3C',
+      'Vol.02': '#3B82F6',
+      'Vol.03': '#F59E0B',
+    };
+    const CATEGORY_META = {
+      restaurant: { emoji: '🍚', label: '맛집' },
+      cafe:       { emoji: '☕', label: '카페' },
+    };
+    // color helper — vol 기준
+    function getColor(place) { return VOL_COLORS[place.vol] || '#888'; }
+    const MAP_CENTER = { lat: 37.514, lng: 127.026 };
+    const MAP_ZOOM   = 15;
+
+    const PLACES = [
+      {
+        id: 'togarashi', name: '토가라시',
+        category: 'restaurant', vol: 'Vol.01', issue: 8,
+        oneLiner: '두툼한 차슈와 진한 육수가 일품인 학동 골목 라멘집',
+        description: '학동 골목 안에 숨어 있는 일본식 라멘·이자카야. 직접 만든 두툼한 차슈와 오랜 시간 우려낸 진한 육수가 핵심. 저녁엔 이자카야 메뉴도 함께 즐길 수 있어 직장인들의 단골 코스.',
+        recommendedMenu: ['라멘', '차슈동', '교자'],
+        address: '서울 강남구 학동로25길 14 1층',
+        hours: '월~토 11:30~22:00 / 일 휴무',
+        phone: '02-515-5799',
+        lat: 37.5145738, lng: 127.0289646, naverUrl: 'https://naver.me/G2EwSeal',
+      },
+      {
+        id: 'ryumongmin', name: '류몽민',
+        category: 'restaurant', vol: 'Vol.01', issue: 8,
+        oneLiner: '직화로 구워내는 깊은 향의 닭갈비 전문점',
+        description: '연기 없이 직화로 구워 탄내 없이 바삭한 닭갈비가 특징. 학동 골목의 숨은 맛집으로, 매콤달콤한 양념과 볶음밥으로 마무리하는 것이 정석 코스.',
+        recommendedMenu: ['직화 닭갈비', '볶음밥'],
+        address: '서울 강남구 학동로25길 11 씨플레이스 2층',
+        hours: '11:00~22:00 / 월 휴무',
+        phone: '02-6404-8080',
+        lat: 37.5143573, lng: 127.0288501, naverUrl: 'https://naver.me/5Kb3aD7O',
+      },
+      {
+        id: 'hongmyeong', name: '홍명',
+        category: 'restaurant', vol: 'Vol.01', issue: 8,
+        oneLiner: '성시경이 극찬한 강남 30년 중식당',
+        description: '강남에서 30년 넘게 한자리를 지켜온 중식당. 방송인 성시경이 직접 픽하며 유명해졌지만, 오래된 단골들이 더 많은 진짜 동네 맛집.',
+        recommendedMenu: ['짜장면', '짬뽕', '탕수육'],
+        address: '서울 강남구 논현로131길 10 1층',
+        hours: '월~토 11:00~21:00 (브레이크타임 15:00~17:00) / 일 휴무',
+        phone: '02-544-5518',
+        lat: 37.5144701, lng: 127.0295125, naverUrl: 'https://naver.me/IFgdnM2M',
+      },
+      {
+        id: 'yong-samgyetang', name: '용삼계탕',
+        category: 'restaurant', vol: 'Vol.01', issue: 8,
+        oneLiner: '30년 넘게 한자리를 지킨 강남의 진짜 삼계탕',
+        description: '30년 넘는 세월 동안 강남을 지켜온 노포 삼계탕집. 매일 새벽부터 끓여내는 진한 국물과 통통하게 오른 닭이 핵심. 재료 소진 시 조기 마감.',
+        recommendedMenu: ['삼계탕', '옻닭'],
+        address: '서울 강남구 학동로4길 8',
+        hours: '월~토 11:00~20:30 / 일 휴무',
+        phone: '02-548-2614',
+        lat: 37.5108874, lng: 127.0228598, naverUrl: 'https://naver.me/x1Vvzbpz',
+      },
+      {
+        id: 'coffee-fiel', name: '커피휘엘',
+        category: 'cafe', vol: 'Vol.02', issue: 9,
+        oneLiner: '12년 연속 블루리본 선정, 강남 스페셜티 로스터리의 정점',
+        description: '블루리본 서베이 12년 연속 선정이라는 기록을 가진 스페셜티 로스터리 카페. 직접 로스팅한 원두로 내리는 브루잉 커피가 대표 메뉴.',
+        recommendedMenu: ['브루잉 커피', '유자 아메리카노', '버터스카치 라떼'],
+        address: '서울 강남구 논현로149길 62',
+        hours: '평일 08:30~20:30 / 주말 11:00~20:00',
+        phone: '02-6215-8138',
+        lat: 37.5169723, lng: 127.0236065, naverUrl: 'https://naver.me/GubwjL7X',
+      },
+      {
+        id: 'sumokumto', name: '카페 수목금토',
+        category: 'cafe', vol: 'Vol.02', issue: 9,
+        oneLiner: '미드센추리 모던 감성과 시그니처 소금라떼',
+        description: '논현동 골목의 미드센추리 모던 인테리어 카페. 이름처럼 수·목·금·토만 운영. 시그니처 소금라떼는 달달함과 짠맛의 균형이 완벽.',
+        recommendedMenu: ['논현 소금라떼', '얼그레이 라떼'],
+        address: '서울 강남구 강남대로136길 63',
+        hours: '수~토 11:00~19:00 / 일~화 휴무',
+        phone: '070-4226-7812',
+        lat: 37.5145296, lng: 127.0254851, naverUrl: 'https://naver.me/5LHs5gdk',
+      },
+      {
+        id: 'imewt-roastery', name: '아임뮤트로스터리',
+        category: 'cafe', vol: 'Vol.02', issue: 9,
+        oneLiner: '신사동 골목 자가배전 스페셜티 카페',
+        description: '신사동 조용한 골목의 자가배전 스페셜티 카페. 직접 로스팅한 싱글오리진 원두로 내리는 브루잉 커피가 메인. 아침 일찍 열고 오후 일찍 닫는 커피 마니아의 성지.',
+        recommendedMenu: ['싱글오리진 브루잉', '카페라떼'],
+        address: '서울 강남구 도산대로8길 9',
+        hours: '월~금 08:00~16:00 / 주말 휴무',
+        phone: '',
+        lat: 37.5164170, lng: 127.0222861, naverUrl: 'https://naver.me/5jJ1r7eX',
+      },
+      {
+        id: 'hyeonji-sikdang', name: '현지식당',
+        category: 'restaurant', vol: 'Vol.03', issue: 10,
+        oneLiner: '강남 한복판에 남아 있는 정 가득한 집밥',
+        description: '강남 한복판에 이런 백반집이 아직 남아 있나 싶은, 정 가득한 집밥 맛집. 매일 바뀌는 신선한 반찬과 푸짐한 한 상이 특징.',
+        recommendedMenu: ['엄마정식', '갈치구이', 'LA정식'],
+        address: '서울 서초구 강남대로 545-15 지하1층',
+        hours: '월~토 10:00~22:00 (브레이크타임 15:00~17:00) / 일 휴무',
+        phone: '02-512-7088',
+        lat: 37.5101125, lng: 127.0204731, naverUrl: 'https://naver.me/GCvqNeGu',
+      },
+      {
+        id: 'salangchae', name: '사랑채',
+        category: 'restaurant', vol: 'Vol.03', issue: 10,
+        oneLiner: '언주로 골목의 남도 웰빙 한식',
+        description: '학동역 인근 언주로 골목의 남도 웰빙 한식 전문점. 꼬막·낙지 등 신선한 남도 식재료를 사용한 비빔밥이 간판 메뉴.',
+        recommendedMenu: ['낙지비빔밥', '꼬막비빔밥', '사랑채정식'],
+        address: '서울 강남구 언주로133길 31',
+        hours: '월~금 11:00~21:30 (브레이크타임 15:00~17:00) / 토 11:00~20:30 / 일 휴무',
+        phone: '0507-1364-2287',
+        lat: 37.5157974, lng: 127.0326633, naverUrl: 'https://naver.me/GQ1lswLT',
+      },
+      {
+        id: 'parkseonghee', name: '박성희가요리하는집',
+        category: 'restaurant', vol: 'Vol.03', issue: 10,
+        oneLiner: '갓 지은 솥밥과 정성 반찬, 제대로 된 한 상',
+        description: '논현역 9번 출구 인근, 솥밥과 매일 바뀌는 정성 반찬의 정갈한 한식집. 솥밥은 뚜껑을 열 때 올라오는 향이 이미 예고편. 누룽지까지 다 먹는 것이 정석.',
+        recommendedMenu: ['솥밥', '생선구이 정식', '제육볶음 정식'],
+        address: '서울 강남구 학동로1길 22',
+        hours: '월~토 11:30~21:00 (브레이크타임 15:00~17:00) / 일 휴무',
+        phone: '02-518-8990',
+        lat: 37.5126783, lng: 127.0218411, naverUrl: 'https://naver.me/xHgIKXqV',
+      },
+    ];
+
+    function makeIcon(color, active) {
+      const s  = active ? 44 : 34;
+      const h  = Math.round(s * 1.3);
+      const sw = active ? 3 : 2;
+      const stroke = active ? '#1a1a1a' : '#fff';
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${h}" viewBox="0 0 36 47">
+        <path d="M18 1C9 1 2 8 2 17c0 11 16 29 16 29s16-18 16-29C34 8 27 1 18 1z"
+          fill="${color}" stroke="${stroke}" stroke-width="${sw}"/>
+        <circle cx="18" cy="17" r="6" fill="#fff"/>
+      </svg>`;
+      return window.L.divIcon({
+        html: svg, className: '',
+        iconSize: [s, h], iconAnchor: [s / 2, h], popupAnchor: [0, -h],
+      });
+    }
+
+    function esc(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function FilterTab({ active, onClick, children }) {
+      return (
+        <button type="button" onClick={onClick}
+          className={
+            'flex-1 py-1.5 px-2 rounded-full text-[12px] font-medium transition-colors border ' +
+            (active
+              ? 'bg-[#FF6B35] text-white border-[#FF6B35]'
+              : 'bg-white text-gray-500 border-gray-200 hover:bg-orange-50')
+          }
+        >{children}</button>
+      );
+    }
+
+    function Pill({ color, children }) {
+      return (
+        <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium leading-tight"
+          style={{ background: color + '20', color }}>
+          {children}
+        </span>
+      );
+    }
+
+    function PlaceCard({ place, selected, onClick, cardRef }) {
+      const meta  = CATEGORY_META[place.category];
+      const color = getColor(place);
+      return (
+        <div ref={cardRef} role="button" tabIndex={0} onClick={onClick}
+          onKeyDown={e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); onClick(); } }}
+          className={
+            'cursor-pointer rounded-xl border bg-white p-4 transition-all outline-none ' +
+            (selected
+              ? 'border-l-4 border-l-[#FF6B35] border-y-gray-100 border-r-gray-100 bg-[#FFF4F0] nc-selected'
+              : 'border-gray-100 hover:bg-[#FFF4F0] hover:shadow-sm')
+          }
+        >
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <span className="px-2 py-0.5 rounded-md text-[11px] font-bold"
+              style={{ background: color + '20', color }}>{place.vol}</span>
+            <span className="text-[11px] text-gray-400">{meta.emoji} {meta.label}</span>
+            <span className="text-[11px] text-gray-300">#{place.issue}호</span>
+          </div>
+
+          <h3 className="font-bold text-[15px] text-gray-900 leading-snug">{place.name}</h3>
+          <p className="text-[12px] text-gray-500 mt-0.5 leading-snug">{place.oneLiner}</p>
+
+          {place.description && (
+            <p className="text-[11px] text-gray-400 mt-1.5 leading-relaxed"
+              style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+              {place.description}
+            </p>
+          )}
+
+          {place.recommendedMenu?.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2.5">
+              {place.recommendedMenu.map((m, i) => <Pill key={i} color={color}>{m}</Pill>)}
+            </div>
+          )}
+
+          {place.address && (
+            <p className="text-[11px] text-gray-400 mt-2 flex items-start gap-1">
+              <span>📍</span><span>{place.address}</span>
+            </p>
+          )}
+          {place.hours && (
+            <p className="text-[11px] text-gray-400 mt-0.5 flex items-start gap-1">
+              <span>🕒</span><span>{place.hours}</span>
+            </p>
+          )}
+
+          {place.naverUrl && (
+            <a href={place.naverUrl} target="_blank" rel="noopener noreferrer"
+              onClick={e => e.stopPropagation()}
+              className="inline-flex items-center gap-1 mt-3 px-3 py-1.5 rounded-lg text-white text-[11px] font-bold hover:opacity-90 transition-opacity"
+              style={{ background: '#03C75A' }}>
+              네이버 지도 →
+            </a>
+          )}
+        </div>
+      );
+    }
+
+    function MapView({ places, selectedId, onSelectPlace }) {
+      const mapEl   = useRef(null);
+      const mapObj  = useRef(null);
+      const markers = useRef({});
+
+      useEffect(() => {
+        if (!mapEl.current || mapObj.current) return;
+        const map = window.L.map(mapEl.current, {
+          center: [MAP_CENTER.lat, MAP_CENTER.lng],
+          zoom: MAP_ZOOM,
+        });
+        window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          maxZoom: 19,
+        }).addTo(map);
+        mapObj.current = map;
+        setTimeout(() => map.invalidateSize(), 200);
+        return () => { map.remove(); mapObj.current = null; markers.current = {}; };
+      }, []);
+
+      useEffect(() => {
+        const map = mapObj.current;
+        if (!map) return;
+        const ro = new ResizeObserver(() => map.invalidateSize());
+        if (mapEl.current) ro.observe(mapEl.current);
+        return () => ro.disconnect();
+      }, []);
+
+      useEffect(() => {
+        const map = mapObj.current;
+        if (!map) return;
+        const keep = new Set(places.map(p => p.id));
+        Object.keys(markers.current).forEach(id => {
+          if (!keep.has(id)) { markers.current[id].remove(); delete markers.current[id]; }
+        });
+        places.forEach(p => {
+          const color  = getColor(p);
+          const active = p.id === selectedId;
+          if (markers.current[p.id]) {
+            markers.current[p.id].setIcon(makeIcon(color, active));
+            markers.current[p.id].setZIndexOffset(active ? 1000 : 0);
+            return;
+          }
+          const marker = window.L.marker([p.lat, p.lng], {
+            icon: makeIcon(color, false), title: p.name,
+          }).addTo(map);
+          const menus = (p.recommendedMenu || [])
+            .map(m => `<span style="display:inline-block;background:${color}22;color:${color};border-radius:9999px;padding:1px 8px;font-size:11px;margin:2px 3px 0 0;">${esc(m)}</span>`)
+            .join('');
+          const naver = p.naverUrl
+            ? `<a href="${esc(p.naverUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-top:8px;background:#03C75A;color:#fff;text-decoration:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;">네이버 지도 →</a>`
+            : '';
+          const popup =
+            `<div style="font-family:'Noto Sans KR',sans-serif;min-width:170px;max-width:220px;">` +
+              `<div style="font-size:10px;font-weight:700;color:${color};margin-bottom:2px;">${esc(p.vol)} · ${CATEGORY_META[p.category].emoji} ${CATEGORY_META[p.category].label}</div>` +
+              `<div style="font-size:14px;font-weight:700;color:#1a1a1a;">${esc(p.name)}</div>` +
+              `<div style="font-size:11px;color:#666;margin-top:2px;">${esc(p.oneLiner)}</div>` +
+              (menus ? `<div style="margin-top:6px;">${menus}</div>` : '') +
+              (p.hours ? `<div style="font-size:10px;color:#999;margin-top:6px;">🕒 ${esc(p.hours)}</div>` : '') +
+              naver +
+            `</div>`;
+          marker.bindPopup(popup, { maxWidth: 240 });
+          marker.on('click', () => onSelectPlace(p.id, 'marker'));
+          markers.current[p.id] = marker;
+        });
+      }, [places, selectedId]);
+
+      useEffect(() => {
+        const map = mapObj.current;
+        if (!map || !selectedId) return;
+        const p      = places.find(x => x.id === selectedId);
+        const marker = markers.current[selectedId];
+        if (!p || !marker) return;
+        map.setView([p.lat, p.lng], Math.max(map.getZoom(), 16), { animate: true });
+        setTimeout(() => marker.openPopup(), 350);
+      }, [selectedId]);
+
+      return <div ref={mapEl} style={{ width: '100%', height: '100%' }} />;
+    }
+
+    function Sidebar({ places, filter, setFilter, selectedId, onSelectPlace, cardRefs }) {
+      const counts = useMemo(() => ({
+        all:        PLACES.length,
+        restaurant: PLACES.filter(p => p.category === 'restaurant').length,
+        cafe:       PLACES.filter(p => p.category === 'cafe').length,
+      }), []);
+
+      return (
+        <aside className="flex flex-col h-full bg-[#FAFAFA] border-r border-gray-200">
+
+          {/* 헤더 — 오렌지 배너 + 아이콘 */}
+          <header className="flex-shrink-0 border-b border-gray-200">
+            <div className="px-5 pt-4 pb-5 flex flex-col items-center text-center"
+              style={{ background: '#FF6B35' }}>
+              <img
+                src="소스/아이콘.png"
+                alt="뉴슐랭 아이콘"
+                style={{ width: 32, height: 32, marginBottom: 8, filter: 'brightness(0) invert(1)' }}
+              />
+              <h1 style={{
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: 400, letterSpacing: '0.08em',
+                lineHeight: 1.1, color: '#fff', fontSize: 24,
+              }}>
+                THE NEWCHELIN GUIDE
+              </h1>
+              <p style={{ color: 'rgba(255,255,255,0.82)', fontSize: 12, marginTop: 5 }}>
+                뉴 아이디가 제안하는, 믿을 수 있는 미식 큐레이션
+              </p>
+            </div>
+
+            {/* 필터 */}
+            <div className="flex gap-1.5 px-3 py-2.5 bg-white">
+              <FilterTab active={filter==='all'}        onClick={() => setFilter('all')}>전체 {counts.all}</FilterTab>
+              <FilterTab active={filter==='restaurant'} onClick={() => setFilter('restaurant')}>🍚 맛집 {counts.restaurant}</FilterTab>
+              <FilterTab active={filter==='cafe'}       onClick={() => setFilter('cafe')}>☕ 카페 {counts.cafe}</FilterTab>
+            </div>
+          </header>
+
+          {/* 카드 리스트 */}
+          <div className="flex-1 overflow-y-auto nc-scroll px-3 py-3 space-y-3">
+            {places.length === 0 ? (
+              <div className="text-center text-gray-400 text-sm py-12">해당 카테고리의 장소가 없습니다.</div>
+            ) : (
+              places.map(p => (
+                <PlaceCard
+                  key={p.id} place={p}
+                  selected={p.id === selectedId}
+                  onClick={() => onSelectPlace(p.id, 'card')}
+                  cardRef={el => { cardRefs.current[p.id] = el; }}
+                />
+              ))
+            )}
+          </div>
+
+          <footer className="flex-shrink-0 px-4 py-2 border-t border-gray-100 bg-white text-center">
+            <p className="text-[10px] text-gray-400">
+              © NEW ID Co., Ltd. —{' '}
+              <a href="https://page.stibee.com/subscriptions/437650" target="_blank" rel="noopener noreferrer"
+                className="underline hover:text-orange-400">뉴스레터 구독</a>
+            </p>
+          </footer>
+        </aside>
+      );
+    }
+
+    function App() {
+      const [filter, setFilter]         = useState('all');
+      const [selectedId, setSelectedId] = useState(null);
+      const cardRefs = useRef({});
+
+      const filtered = useMemo(() => {
+        const list = filter === 'all' ? PLACES : PLACES.filter(p => p.category === filter);
+        return [...list].sort((a, b) => b.issue - a.issue);
+      }, [filter]);
+
+      useEffect(() => {
+        if (selectedId && !filtered.some(p => p.id === selectedId)) setSelectedId(null);
+      }, [filtered, selectedId]);
+
+      const handleSelect = useCallback((id, source) => {
+        setSelectedId(id);
+        if (source === 'marker') {
+          requestAnimationFrame(() => {
+            cardRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          });
+        }
+      }, []);
+
+      return (
+        <div className="flex flex-col md:flex-row" style={{ height: '100vh', width: '100vw', overflow: 'hidden' }}>
+          {/* 데스크톱: 왼쪽 사이드패널 */}
+          <div className="order-2 md:order-1 h-[50vh] md:h-full w-full md:w-[360px] flex-shrink-0 flex flex-col">
+            <Sidebar
+              places={filtered} filter={filter} setFilter={setFilter}
+              selectedId={selectedId} onSelectPlace={handleSelect} cardRefs={cardRefs}
+            />
+          </div>
+          {/* 데스크톱: 오른쪽 지도 */}
+          <div className="order-1 md:order-2 h-[50vh] md:h-full flex-1 min-w-0">
+            <MapView places={filtered} selectedId={selectedId} onSelectPlace={handleSelect} />
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
