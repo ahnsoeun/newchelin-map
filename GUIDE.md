@@ -9,6 +9,7 @@
 - React 18 (CDN) + Tailwind CSS
 - 지도: **Leaflet + OpenStreetMap** (무료, API 키 없음, 해외 접속 가능)
 - 폰트: Noto Sans KR + Poppins (헤더 타이틀)
+- 파비콘: `favicon.png` (루트에 위치, 교체 시 같은 파일명으로 덮어쓰기)
 - 단일 `index.html` 파일로 구성
 
 ---
@@ -38,6 +39,19 @@
 
 ---
 
+## Vol별 뉴스레터 링크
+카드의 "관련 뉴스레터 보기" 버튼은 `ISSUE_LINKS` 객체에서 호수(issue) 기준으로 매핑됩니다.
+```js
+const ISSUE_LINKS = {
+  8: 'https://stibee.com/api/v1.0/emails/share/oWNEWkGCBhXlOqQtuAOKTH-3bZ0kELk',   // Vol.01
+  9: 'https://stibee.com/api/v1.0/emails/share/do_AFKVMdD0oa6Tx38YA7naFmnXl4n8',   // Vol.02
+  10: 'https://stibee.com/api/v1.0/emails/share/D-_JkInAShqb8GMj5QZji4agQ1tCLpA',  // Vol.03
+};
+```
+새 Vol 추가 시 해당 호수의 뉴스레터 공유 링크를 `ISSUE_LINKS`에 추가해야 버튼이 노출됩니다.
+
+---
+
 ## 새 식당 추가 방법
 
 ### 1. 좌표 찾기
@@ -60,8 +74,10 @@
 - 추천 메뉴: 
 - 주소: 
 - 영업시간: 
+- 전화번호: (없으면 생략 가능)
 - 네이버 링크: 
 - 좌표: lat: , lng: 
+- 해당 호수 뉴스레터 공유 링크: (ISSUE_LINKS에 새로 추가 필요)
 ```
 
 ### 3. index.html 내부 PLACES 배열 구조 참고
@@ -71,17 +87,25 @@
   name: '식당명',
   category: 'restaurant',   // 맛집: restaurant / 카페: cafe
   vol: 'Vol.04',
-  issue: 11,                 // 뉴스레터 호수
+  issue: 11,                 // 뉴스레터 호수 (ISSUE_LINKS 매핑 키와 일치해야 함)
   oneLiner: '한 줄 설명',
-  description: '2~3문장 상세 설명',
+  description: '2~3문장 상세 설명',  // 카드에는 미노출, 데이터로만 보관
   recommendedMenu: ['메뉴1', '메뉴2'],
   address: '도로명 주소',
-  hours: '영업시간',
+  hours: '영업시간',          // 없으면 필드 생략 (카드에 🕒 라인 자체가 안 보임)
+  phone: '02-000-0000',      // 없으면 빈 문자열 '' 가능
   lat: 37.000000,
   lng: 127.000000,
   naverUrl: 'https://naver.me/xxxxx',
 }
 ```
+
+---
+
+## 풋터 링크
+- 뉴스레터 구독: https://page.stibee.com/subscriptions/437650
+- 홈페이지: https://www.its-newid.com/
+- 데스크톱(사이드바)·모바일 풋터 모두 동일하게 반영됨
 
 ---
 
