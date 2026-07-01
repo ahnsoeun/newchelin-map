@@ -242,13 +242,6 @@
           <h3 className="font-bold text-[15px] text-gray-900 leading-snug">{place.name}</h3>
           <p className="text-[12px] text-gray-500 mt-0.5 leading-snug">{place.oneLiner}</p>
 
-          {place.description && (
-            <p className="text-[11px] text-gray-400 mt-1.5 leading-relaxed"
-              style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-              {place.description}
-            </p>
-          )}
-
           {place.recommendedMenu?.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2.5">
               {place.recommendedMenu.map((m, i) => <Pill key={i} color={color}>{m}</Pill>)}
