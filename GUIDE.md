@@ -1,7 +1,7 @@
 # 뉴슐랭 맵 운영 가이드
 
 ## 파일 위치
-`/Users/ahnsoeun/Desktop/claude-workspace/newchelin-map/index.html`
+`/Users/ahnsoeun/Desktop/ai workspace/newchelin-map/index.html`
 
 ---
 
@@ -63,7 +63,7 @@ const ISSUE_LINKS = {
 새 세션에서 아래 형식으로 요청:
 
 ```
-/Users/ahnsoeun/Desktop/claude-workspace/newchelin-map/index.html
+/Users/ahnsoeun/Desktop/ai workspace/newchelin-map/index.html
 여기에 새 식당 추가해줘:
 - 이름: 
 - 카테고리: 맛집 or 카페
@@ -117,6 +117,6 @@ const ISSUE_LINKS = {
 ## 업데이트 배포 방법
 index.html 수정 후 터미널에서:
 ```
-cd /Users/ahnsoeun/Desktop/claude-workspace/newchelin-map && git add . && git commit -m "식당 추가" && git push
+cd "/Users/ahnsoeun/Desktop/ai workspace/newchelin-map" && git add . && git commit -m "식당 추가" && git push
 ```
 push 하면 Vercel이 자동으로 반영됩니다.
