@@ -65,6 +65,11 @@
     function getColor(place) { return VOL_COLORS[place.vol] || '#888'; }
     const MAP_CENTER = { lat: 37.514, lng: 127.026 };
     const MAP_ZOOM   = 15;
+    const COMPANY = {
+      name: '뉴 아이디 NEW ID',
+      address: '서울 강남구 강남대로132길 55 MV타워 4층',
+      lat: 37.5134375, lng: 127.0254375,
+    };
     const ISSUE_LINKS = {
       8: 'https://stibee.com/api/v1.0/emails/share/oWNEWkGCBhXlOqQtuAOKTH-3bZ0kELk',
       9: 'https://stibee.com/api/v1.0/emails/share/do_AFKVMdD0oa6Tx38YA7naFmnXl4n8',
@@ -199,6 +204,28 @@
       });
     }
 
+    const COMPANY_COLOR = '#4C1D95';
+
+    function makeCompanyIcon() {
+      const s = 40, h = Math.round(s * 1.3);
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${h}" viewBox="0 0 36 47">
+        <defs>
+          <linearGradient id="ncCompanyGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#7C3AED"/>
+            <stop offset="100%" stop-color="#1E1B4B"/>
+          </linearGradient>
+        </defs>
+        <path d="M18 1C9 1 2 8 2 17c0 11 16 29 16 29s16-18 16-29C34 8 27 1 18 1z"
+          fill="url(#ncCompanyGrad)" stroke="#fff" stroke-width="3"/>
+        <circle cx="18" cy="17" r="8" fill="#fff"/>
+        <text x="18" y="21" font-size="12" text-anchor="middle">🏢</text>
+      </svg>`;
+      return window.L.divIcon({
+        html: svg, className: '',
+        iconSize: [s, h], iconAnchor: [s / 2, h], popupAnchor: [0, -h],
+      });
+    }
+
     function esc(s) {
       return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
@@ -301,6 +328,18 @@
           attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
           maxZoom: 19,
         }).addTo(map);
+
+        window.L.marker([COMPANY.lat, COMPANY.lng], {
+          icon: makeCompanyIcon(), title: COMPANY.name, zIndexOffset: 500,
+        }).addTo(map)
+          .bindPopup(
+            `<div style="font-family:'Noto Sans KR',sans-serif;min-width:150px;">` +
+              `<div style="font-size:13px;font-weight:700;color:${COMPANY_COLOR};">🏢 ${esc(COMPANY.name)}</div>` +
+              `<div style="font-size:11px;color:#666;margin-top:2px;">${esc(COMPANY.address)}</div>` +
+            `</div>`,
+            { maxWidth: 220 }
+          );
+
         mapObj.current = map;
         setTimeout(() => map.invalidateSize(), 200);
         return () => { map.remove(); mapObj.current = null; markers.current = {}; };
