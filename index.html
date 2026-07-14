@@ -490,7 +490,12 @@
               (p.hours ? `<div style="font-size:10.5px;color:#8B95A1;margin-top:8px;">🕒 ${esc(p.hours)}</div>` : '') +
               naver +
             `</div>`;
-          marker.bindPopup(popup, { maxWidth: 250 });
+          marker.bindPopup(popup, {
+            maxWidth: 250,
+            autoPan: true,
+            autoPanPaddingTopLeft: window.L.point(16, 96),
+            autoPanPaddingBottomRight: window.L.point(16, 24),
+          });
           marker.on('click', () => onSelectPlace(p.id, 'marker'));
           markers.current[p.id] = marker;
         });
@@ -502,7 +507,12 @@
         const p = places.find(x => x.id === selectedId);
         const marker = markers.current[selectedId];
         if (!p || !marker) return;
-        map.setView([p.lat, p.lng], Math.max(map.getZoom(), 16), { animate: true });
+        const zoom = Math.max(map.getZoom(), 16);
+        // 마커를 화면 정중앙이 아니라 아래쪽에 두어, 위로 펼쳐지는 말풍선이 잘리지 않게 함.
+        // 작은 화면일수록 오프셋이 커야 하므로 지도 높이에 비례(최대 150px).
+        const offsetY = Math.min(map.getSize().y * 0.28, 150);
+        const target  = map.project([p.lat, p.lng], zoom).subtract([0, offsetY]);
+        map.setView(map.unproject(target, zoom), zoom, { animate: true });
         setTimeout(() => marker.openPopup(), 350);
       }, [selectedId]);
 
