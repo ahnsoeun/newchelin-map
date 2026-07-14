@@ -12,37 +12,216 @@
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone@7.25.9/babel.min.js"></script>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Poppins:wght@400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" as="style" crossorigin
+    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 
   <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
+    :root {
+      --brand:   #FF6B35;
+      --brand-d: #E85826;
+      --ink:     #191F28;
+      --ink-2:   #4E5968;
+      --gray:    #8B95A1;
+      --line:    #E5E8EB;
+      --bg:      #EDF0F3;
+      --panel:   #FFFFFF;
+      --vol1:    #E23B3B;
+      --vol2:    #12A594;
+      --vol3:    #F6A609;
+      --naver:   #03C75A;
+    }
     html, body, #root { height: 100%; margin: 0; }
-    body { font-family: 'Noto Sans KR', sans-serif; background: #FAFAFA; }
-    #root { opacity: 0; transition: opacity 0.2s ease; }
+    body {
+      font-family: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg); color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+    }
+    #root { opacity: 0; transition: opacity 0.25s ease; }
     #root.nc-ready { opacity: 1; }
-    .nc-scroll::-webkit-scrollbar { width: 6px; }
-    .nc-scroll::-webkit-scrollbar-thumb { background: #e5e5e5; border-radius: 4px; }
-    .nc-scroll::-webkit-scrollbar-thumb:hover { background: #ccc; }
+
+    .nc-scroll::-webkit-scrollbar { width: 8px; }
+    .nc-scroll::-webkit-scrollbar-thumb { background: #D6DBE0; border-radius: 8px; }
+    .nc-scroll::-webkit-scrollbar-thumb:hover { background: #c2c8cf; }
+    .nc-xscroll::-webkit-scrollbar { height: 0; }
+
+    /* ── shell (mobile-first) ── */
+    .app   { display: flex; flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; background: var(--bg); }
+    .rail  { display: none; }
+    .stage { position: relative; height: 46vh; flex-shrink: 0; }
+    .map-layer { position: absolute; inset: 0; z-index: 0; }
+    .linebar {
+      position: absolute; top: 10px; left: 10px; right: 10px; z-index: 10;
+      display: flex; gap: 6px; overflow-x: auto; padding: 4px;
+    }
+    .panel {
+      position: relative; flex: 1; min-height: 0; z-index: 1;
+      display: flex; flex-direction: column; background: var(--panel);
+    }
+
+    @media (min-width: 768px) {
+      .rail {
+        display: flex; flex-direction: column; align-items: center;
+        position: absolute; top: 0; left: 0; bottom: 0; width: 64px; z-index: 30;
+        background: var(--panel); border-right: 1px solid var(--line); padding: 16px 0;
+      }
+      .stage { position: absolute; inset: 0; height: auto; z-index: 0; }
+      .linebar { top: 16px; left: calc(64px + 16px + 380px + 18px); right: 16px; padding: 0; }
+      .panel {
+        position: absolute; top: 16px; left: 80px; bottom: 16px; width: 380px; z-index: 20;
+        border-radius: 20px; box-shadow: 0 10px 44px rgba(25,31,40,0.16); overflow: hidden;
+      }
+    }
+
+    /* ── rail ── */
+    .rail__logo { width: 34px; height: 34px; margin-bottom: 22px; }
+    .rail__btn {
+      width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
+      border-radius: 12px; color: var(--gray); background: transparent; border: none; cursor: pointer;
+      margin-bottom: 6px; transition: background .15s, color .15s;
+    }
+    .rail__btn:hover { background: #F2F4F6; color: var(--ink); }
+    .rail__btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+    .rail__btn svg { width: 22px; height: 22px; }
+    .rail__spacer { flex: 1; }
+
+    /* ── panel head ── */
+    .head { flex-shrink: 0; padding: 18px 18px 12px; display: flex; align-items: center; gap: 9px; }
+    .head__logo { width: 30px; height: 30px; border-radius: 8px; }
+    .head__name { font-size: 16px; font-weight: 800; letter-spacing: -0.02em; }
+    .head__name span { color: var(--brand); margin-left: 5px; }
+    .head__tag { font-size: 11px; color: var(--gray); font-weight: 500; margin-top: 1px; }
+
+    .body { flex: 1; overflow-y: auto; scrollbar-gutter: stable; padding: 0 18px 18px; }
+
+    /* ── banner ── */
+    .banner {
+      position: relative; border-radius: 14px; overflow: hidden; height: 134px; margin-bottom: 14px;
+      background: linear-gradient(135deg, #FF8154 0%, #FF6B35 46%, #E85826 100%);
+      padding: 16px 18px; display: flex; flex-direction: column; justify-content: center; color: #fff;
+    }
+    .banner__wm { position: absolute; right: -8px; bottom: -16px; width: 104px; height: 104px; opacity: 0.16; filter: brightness(0) invert(1); }
+    .banner__tag {
+      align-self: flex-start; font-size: 10px; font-weight: 800; letter-spacing: 0.02em;
+      color: #fff; background: rgba(255,255,255,0.24); padding: 3px 9px; border-radius: 999px; margin-bottom: 9px;
+    }
+    .banner__h { position: relative; z-index: 1; font-size: 17px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.5; }
+    .banner__s { position: relative; z-index: 1; font-size: 11.5px; font-weight: 500; color: rgba(255,255,255,0.92); margin-top: 3px; }
+
+    /* ── search ── */
+    .search { position: relative; margin-bottom: 12px; }
+    .search svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--gray); }
+    .search input {
+      width: 100%; height: 44px; border: 1px solid var(--line); border-radius: 12px;
+      background: #F7F8FA; padding: 0 38px 0 40px; font-size: 13.5px; color: var(--ink);
+      font-family: inherit; outline: none; transition: border-color .15s, background .15s;
+    }
+    .search input::placeholder { color: var(--gray); }
+    .search input:focus { border-color: var(--brand); background: #fff; }
+    .search__clear {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      width: 22px; height: 22px; border-radius: 999px; border: none; cursor: pointer;
+      background: #E5E8EB; color: var(--ink-2); font-size: 13px; line-height: 1; display: flex; align-items: center; justify-content: center;
+    }
+    .search__clear:hover { background: #d7dbe0; }
+
+    /* ── chips ── */
+    .chips { display: flex; gap: 7px; margin-bottom: 6px; }
+    .chip {
+      flex: 1; height: 36px; border: 1px solid var(--line); background: #fff; color: var(--ink-2);
+      border-radius: 10px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+    .chip:hover { border-color: #d3d8dd; }
+    .chip b { font-weight: 800; margin-left: 4px; opacity: 0.6; }
+    .chip--on { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .chip--on b { opacity: 0.85; }
+    .chip:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+    .count-line { font-size: 12px; color: var(--gray); font-weight: 500; margin: 12px 2px 6px; }
+    .count-line b { color: var(--ink); font-weight: 700; }
+
+    /* ── place card ── */
+    .card {
+      position: relative; border: 1px solid var(--line); border-radius: 14px; background: #fff;
+      padding: 14px 15px; margin-bottom: 10px; cursor: pointer; outline: none;
+      transition: border-color .15s, box-shadow .15s, transform .1s;
+    }
+    .card:hover { border-color: #d3d8dd; box-shadow: 0 4px 16px rgba(25,31,40,0.07); }
+    .card:active { transform: scale(0.995); }
+    .card--on { border-color: var(--brand); box-shadow: 0 4px 18px rgba(255,107,53,0.16); }
+    .card:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+
+    .card__top { display: flex; align-items: center; gap: 6px; margin-bottom: 7px; }
+    .vol-badge {
+      display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700;
+      padding: 2px 9px 2px 7px; border-radius: 999px;
+    }
+    .vol-dot { width: 7px; height: 7px; border-radius: 999px; }
+    .card__cat { font-size: 11.5px; color: var(--gray); font-weight: 600; }
+    .card__issue { font-size: 11.5px; color: #B0B8C1; font-weight: 500; margin-left: auto; }
+    .card__name { font-size: 16px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.3; }
+    .card__desc { font-size: 12.5px; color: var(--ink-2); line-height: 1.55; margin-top: 3px; }
+    .menu { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+    .menu span {
+      font-size: 11.5px; font-weight: 600; color: var(--ink-2); background: #F2F4F6;
+      padding: 3px 9px; border-radius: 8px;
+    }
+    .meta { display: flex; align-items: flex-start; gap: 5px; font-size: 11.5px; color: var(--gray); margin-top: 9px; line-height: 1.5; }
+    .meta svg { width: 13px; height: 13px; flex-shrink: 0; margin-top: 2px; }
+    .acts { display: flex; gap: 7px; margin-top: 12px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 4px; height: 33px; padding: 0 13px; border-radius: 9px;
+      font-size: 12px; font-weight: 700; text-decoration: none; cursor: pointer; transition: opacity .15s, background .15s;
+    }
+    .btn--naver { background: var(--naver); color: #fff; }
+    .btn--naver:hover { opacity: 0.9; }
+    .btn--news { background: #FFF1EB; color: var(--brand-d); }
+    .btn--news:hover { background: #FFE5DA; }
+
+    .empty { text-align: center; color: var(--gray); font-size: 13px; padding: 44px 12px; line-height: 1.6; }
+
+    /* ── footer ── */
+    .foot { flex-shrink: 0; padding: 11px 18px; border-top: 1px solid var(--line); background: #fff; text-align: center; }
+    .foot p { font-size: 10.5px; color: var(--gray); }
+    .foot a { color: var(--ink-2); text-decoration: none; font-weight: 600; }
+    .foot a:hover { color: var(--brand); }
+
+    /* ── line badge (subway-style) ── */
+    .lb {
+      display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; height: 36px; padding: 0 14px;
+      background: #fff; border: 1px solid var(--line); border-radius: 999px; cursor: pointer;
+      font-family: inherit; font-size: 13px; font-weight: 700; color: var(--ink-2);
+      box-shadow: 0 2px 10px rgba(25,31,40,0.08); transition: border-color .15s, color .15s, background .15s;
+    }
+    .lb:hover { border-color: #d3d8dd; }
+    .lb__dot { width: 9px; height: 9px; border-radius: 999px; }
+    .lb__n { font-size: 11px; font-weight: 700; opacity: 0.55; }
+    .lb--on { color: #fff; border-color: transparent; }
+    .lb:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+    /* ── leaflet clean overrides ── */
+    .leaflet-container { background: #EAEEF1 !important; font-family: 'Pretendard','Noto Sans KR',sans-serif !important; }
+    .leaflet-popup-content-wrapper { border-radius: 14px !important; box-shadow: 0 8px 30px rgba(25,31,40,0.18) !important; }
+    .leaflet-popup-content { margin: 14px 16px !important; }
+    .leaflet-control-zoom { border: none !important; box-shadow: 0 2px 12px rgba(25,31,40,0.14) !important; border-radius: 12px !important; overflow: hidden; }
+    .leaflet-control-zoom a { color: var(--ink) !important; border: none !important; }
+    .leaflet-bar a:first-child { border-bottom: 1px solid var(--line) !important; }
+    .leaflet-control-attribution { font-size: 9px !important; background: rgba(255,255,255,0.75) !important; }
+    .nc-pin { filter: drop-shadow(0 3px 4px rgba(25,31,40,0.28)); }
+
     @keyframes nc-pulse {
-      0%   { box-shadow: 0 0 0 0 rgba(255,107,53,0.4); }
-      70%  { box-shadow: 0 0 0 8px rgba(255,107,53,0); }
+      0%   { box-shadow: 0 0 0 0 rgba(255,107,53,0.45); }
+      70%  { box-shadow: 0 0 0 12px rgba(255,107,53,0); }
       100% { box-shadow: 0 0 0 0 rgba(255,107,53,0); }
     }
-    .nc-selected { animation: nc-pulse 0.8s ease-out; }
-    .leaflet-popup-content-wrapper { border-radius: 12px !important; box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important; }
-    .leaflet-popup-content { margin: 14px 16px !important; }
-    .leaflet-container { font-family: 'Noto Sans KR', sans-serif !important; }
-    .app-root  { display: flex; flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; }
-    .map-wrap  { height: 40vh; flex-shrink: 0; }
-    @media (min-width: 768px) {
-      .app-root  { flex-direction: row; }
-      .map-wrap  { height: 100%; flex: 1; order: 2; min-width: 0; }
-      .sidebar-wrap { order: 1; width: 360px; flex-shrink: 0; height: 100%; display: flex; flex-direction: column; }
+    .nc-selected { animation: nc-pulse 0.85s ease-out; }
+
+    @media (prefers-reduced-motion: reduce) {
+      #root, .card, .nc-selected { transition: none !important; animation: none !important; }
     }
   </style>
 </head>
@@ -52,16 +231,9 @@
   <script type="text/babel">
     const { useState, useEffect, useRef, useMemo, useCallback } = React;
 
-    const VOL_COLORS = {
-      'Vol.01': '#E74C3C',
-      'Vol.02': '#3B82F6',
-      'Vol.03': '#F59E0B',
-    };
-    const CATEGORY_META = {
-      restaurant: { emoji: '🍚', label: '맛집' },
-      cafe:       { emoji: '☕', label: '카페' },
-    };
-    // color helper — vol 기준
+    const VOL_COLORS = { 'Vol.01': '#E23B3B', 'Vol.02': '#12A594', 'Vol.03': '#F6A609' };
+    const VOLS = ['Vol.01', 'Vol.02', 'Vol.03'];
+    const CATEGORY_META = { restaurant: { label: '맛집' }, cafe: { label: '카페' } };
     function getColor(place) { return VOL_COLORS[place.vol] || '#888'; }
     const MAP_CENTER = { lat: 37.514, lng: 127.026 };
     const MAP_ZOOM   = 15;
@@ -70,6 +242,7 @@
       address: '서울 강남구 강남대로132길 55 MV타워 4층',
       lat: 37.5134375, lng: 127.0254375,
     };
+    const COMPANY_COLOR = '#4C1D95';
     const ISSUE_LINKS = {
       8: 'https://stibee.com/api/v1.0/emails/share/oWNEWkGCBhXlOqQtuAOKTH-3bZ0kELk',
       9: 'https://stibee.com/api/v1.0/emails/share/do_AFKVMdD0oa6Tx38YA7naFmnXl4n8',
@@ -188,132 +361,66 @@
       },
     ];
 
+    // Vol → 편수 라벨 (Vol.01 → '1편', 1부터 시작)
+    const VOL_LABEL = Object.fromEntries(VOLS.map((v, i) => [v, (i + 1) + '편']));
+
     function makeIcon(color, active) {
-      const s  = active ? 44 : 34;
-      const h  = Math.round(s * 1.3);
-      const sw = active ? 3 : 2;
-      const stroke = active ? '#1a1a1a' : '#fff';
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${h}" viewBox="0 0 36 47">
-        <path d="M18 1C9 1 2 8 2 17c0 11 16 29 16 29s16-18 16-29C34 8 27 1 18 1z"
-          fill="${color}" stroke="${stroke}" stroke-width="${sw}"/>
-        <circle cx="18" cy="17" r="6" fill="#fff"/>
+      const s  = active ? 40 : 30;
+      const h  = Math.round(s * 1.32);
+      const sw = active ? 3 : 2.4;
+      const svg = `<svg class="nc-pin" xmlns="http://www.w3.org/2000/svg" width="${s}" height="${h}" viewBox="0 0 36 47">
+        <path d="M18 2C10 2 3.5 8.3 3.5 16.5c0 10 14.5 27.5 14.5 27.5s14.5-17.5 14.5-27.5C32.5 8.3 26 2 18 2z"
+          fill="${active ? color : '#fff'}" stroke="${color}" stroke-width="${sw}"/>
+        <circle cx="18" cy="16.5" r="5" fill="${active ? '#fff' : color}"/>
       </svg>`;
-      return window.L.divIcon({
-        html: svg, className: '',
-        iconSize: [s, h], iconAnchor: [s / 2, h], popupAnchor: [0, -h],
-      });
+      return window.L.divIcon({ html: svg, className: '', iconSize: [s, h], iconAnchor: [s/2, h], popupAnchor: [0, -h] });
     }
 
-    const COMPANY_COLOR = '#4C1D95';
-
     function makeCompanyIcon() {
-      const s = 40, h = Math.round(s * 1.3);
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${h}" viewBox="0 0 36 47">
-        <defs>
-          <linearGradient id="ncCompanyGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#7C3AED"/>
-            <stop offset="100%" stop-color="#1E1B4B"/>
-          </linearGradient>
-        </defs>
-        <path d="M18 1C9 1 2 8 2 17c0 11 16 29 16 29s16-18 16-29C34 8 27 1 18 1z"
-          fill="url(#ncCompanyGrad)" stroke="#fff" stroke-width="3"/>
-        <circle cx="18" cy="17" r="8" fill="#fff"/>
-        <text x="18" y="21" font-size="12" text-anchor="middle">🏢</text>
+      const s = 38, h = Math.round(s * 1.32);
+      const svg = `<svg class="nc-pin" xmlns="http://www.w3.org/2000/svg" width="${s}" height="${h}" viewBox="0 0 36 47">
+        <path d="M18 2C10 2 3.5 8.3 3.5 16.5c0 10 14.5 27.5 14.5 27.5s14.5-17.5 14.5-27.5C32.5 8.3 26 2 18 2z"
+          fill="${COMPANY_COLOR}" stroke="#fff" stroke-width="2.4"/>
+        <text x="18" y="21.5" font-size="14" font-weight="800" font-family="Pretendard, sans-serif" fill="#fff" text-anchor="middle">N</text>
       </svg>`;
-      return window.L.divIcon({
-        html: svg, className: '',
-        iconSize: [s, h], iconAnchor: [s / 2, h], popupAnchor: [0, -h],
-      });
+      return window.L.divIcon({ html: svg, className: '', iconSize: [s, h], iconAnchor: [s/2, h], popupAnchor: [0, -h] });
     }
 
     function esc(s) {
       return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
-    function FilterTab({ active, onClick, children }) {
+    const IconSearch = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>);
+    const IconPin    = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21s-7-6.3-7-11a7 7 0 0 1 14 0c0 4.7-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>);
+    const IconClock  = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>);
+    const IconReset  = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>);
+    const IconMail   = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7.5 8 5.5 8-5.5"/></svg>);
+    const IconHome   = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/></svg>);
+
+    function LineBar({ volFilter, setVolFilter, volCounts }) {
       return (
-        <button type="button" onClick={onClick}
-          className={
-            'flex-1 py-1.5 px-2 rounded-full text-[12px] font-medium transition-colors border ' +
-            (active
-              ? 'bg-[#FF6B35] text-white border-[#FF6B35]'
-              : 'bg-white text-gray-500 border-gray-200 hover:bg-orange-50')
-          }
-        >{children}</button>
-      );
-    }
-
-    function Pill({ color, children }) {
-      return (
-        <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium leading-tight"
-          style={{ background: color + '20', color }}>
-          {children}
-        </span>
-      );
-    }
-
-    function PlaceCard({ place, selected, onClick, cardRef }) {
-      const meta  = CATEGORY_META[place.category];
-      const color = getColor(place);
-      return (
-        <div ref={cardRef} role="button" tabIndex={0} onClick={onClick}
-          onKeyDown={e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); onClick(); } }}
-          className={
-            'cursor-pointer rounded-xl border-2 bg-white p-4 transition-all outline-none ' +
-            (selected
-              ? 'border-[#FF6B35] bg-[#FFF4F0] nc-selected'
-              : 'border-gray-100 hover:bg-[#FFF4F0] hover:shadow-sm')
-          }
-        >
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <span className="px-2 py-0.5 rounded-md text-[11px] font-bold"
-              style={{ background: color + '20', color }}>{place.vol}</span>
-            <span className="text-[11px] text-gray-400">{meta.emoji} {meta.label}</span>
-            <span className="text-[11px] text-gray-300">#{place.issue}호</span>
-          </div>
-
-          <h3 className="font-bold text-[15px] text-gray-900 leading-snug">{place.name}</h3>
-          <p className="text-[12px] text-gray-500 mt-0.5 leading-snug">{place.oneLiner}</p>
-
-          {place.recommendedMenu?.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2.5">
-              {place.recommendedMenu.map((m, i) => <Pill key={i} color={color}>{m}</Pill>)}
-            </div>
-          )}
-
-          {place.address && (
-            <p className="text-[11px] text-gray-400 mt-2 flex items-start gap-1">
-              <span>📍</span><span>{place.address}</span>
-            </p>
-          )}
-          {place.hours && (
-            <p className="text-[11px] text-gray-400 mt-0.5 flex items-start gap-1">
-              <span>🕒</span><span>{place.hours}</span>
-            </p>
-          )}
-
-          <div className="flex items-center gap-1.5 mt-3">
-            {place.naverUrl && (
-              <a href={place.naverUrl} target="_blank" rel="noopener noreferrer"
-                onClick={e => e.stopPropagation()}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-white text-[11px] font-bold hover:opacity-90 transition-opacity"
-                style={{ background: '#03C75A' }}>
-                네이버 지도
-              </a>
-            )}
-            {ISSUE_LINKS[place.issue] && (
-              <a href={ISSUE_LINKS[place.issue]} target="_blank" rel="noopener noreferrer"
-                onClick={e => e.stopPropagation()}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-[#FF6B35] text-[11px] font-bold border border-[#FF6B35] bg-white hover:bg-[#FFF4F0] transition-colors">
-                관련 뉴스레터 보기
-              </a>
-            )}
-          </div>
+        <div className="linebar nc-xscroll">
+          <button className={'lb' + (volFilter==='all' ? ' lb--on' : '')}
+            style={volFilter==='all' ? { background: 'var(--ink)' } : null}
+            onClick={() => setVolFilter('all')}>
+            전체 <span className="lb__n" style={volFilter==='all' ? { color: 'rgba(255,255,255,0.7)' } : null}>{volCounts.all}</span>
+          </button>
+          {VOLS.map(v => {
+            const on = volFilter === v;
+            const c = VOL_COLORS[v];
+            return (
+              <button key={v} className={'lb' + (on ? ' lb--on' : '')}
+                style={on ? { background: c } : null} onClick={() => setVolFilter(v)}>
+                <span className="lb__dot" style={{ background: on ? '#fff' : c }} />
+                {VOL_LABEL[v]} <span className="lb__n" style={on ? { color: 'rgba(255,255,255,0.75)' } : null}>{volCounts[v] || 0}</span>
+              </button>
+            );
+          })}
         </div>
       );
     }
 
-    function MapView({ places, selectedId, onSelectPlace }) {
+    function MapView({ places, selectedId, onSelectPlace, mapRef }) {
       const mapEl   = useRef(null);
       const mapObj  = useRef(null);
       const markers = useRef({});
@@ -321,26 +428,25 @@
       useEffect(() => {
         if (!mapEl.current || mapObj.current) return;
         const map = window.L.map(mapEl.current, {
-          center: [MAP_CENTER.lat, MAP_CENTER.lng],
-          zoom: MAP_ZOOM,
+          center: [MAP_CENTER.lat, MAP_CENTER.lng], zoom: MAP_ZOOM, zoomControl: false,
         });
-        window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-          maxZoom: 19,
+        window.L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
+          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · © <a href="https://carto.com/attributions">CARTO</a>',
+          maxZoom: 20, subdomains: 'abcd',
         }).addTo(map);
+        window.L.control.zoom({ position: 'bottomright' }).addTo(map);
 
         window.L.marker([COMPANY.lat, COMPANY.lng], {
           icon: makeCompanyIcon(), title: COMPANY.name, zIndexOffset: 500,
-        }).addTo(map)
-          .bindPopup(
-            `<div style="font-family:'Noto Sans KR',sans-serif;min-width:150px;">` +
-              `<div style="font-size:13px;font-weight:700;color:${COMPANY_COLOR};">🏢 ${esc(COMPANY.name)}</div>` +
-              `<div style="font-size:11px;color:#666;margin-top:2px;">${esc(COMPANY.address)}</div>` +
-            `</div>`,
-            { maxWidth: 220 }
-          );
+        }).addTo(map).bindPopup(
+          `<div style="font-family:'Pretendard',sans-serif;min-width:150px;">` +
+            `<div style="font-size:10.5px;font-weight:700;color:${COMPANY_COLOR};">NEW ID · 본사</div>` +
+            `<div style="font-size:14px;font-weight:800;color:#191F28;margin-top:2px;">${esc(COMPANY.name)}</div>` +
+            `<div style="font-size:11px;color:#8B95A1;margin-top:3px;">${esc(COMPANY.address)}</div>` +
+          `</div>`, { maxWidth: 230 });
 
         mapObj.current = map;
+        if (mapRef) mapRef.current = map;
         setTimeout(() => map.invalidateSize(), 200);
         return () => { map.remove(); mapObj.current = null; markers.current = {}; };
       }, []);
@@ -368,25 +474,23 @@
             markers.current[p.id].setZIndexOffset(active ? 1000 : 0);
             return;
           }
-          const marker = window.L.marker([p.lat, p.lng], {
-            icon: makeIcon(color, false), title: p.name,
-          }).addTo(map);
+          const marker = window.L.marker([p.lat, p.lng], { icon: makeIcon(color, false), title: p.name }).addTo(map);
           const menus = (p.recommendedMenu || [])
-            .map(m => `<span style="display:inline-block;background:${color}22;color:${color};border-radius:9999px;padding:1px 8px;font-size:11px;margin:2px 3px 0 0;">${esc(m)}</span>`)
+            .map(m => `<span style="display:inline-block;background:#F2F4F6;color:#4E5968;border-radius:7px;padding:2px 8px;font-size:11px;font-weight:600;margin:3px 4px 0 0;">${esc(m)}</span>`)
             .join('');
           const naver = p.naverUrl
-            ? `<a href="${esc(p.naverUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-top:8px;background:#03C75A;color:#fff;text-decoration:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;">네이버 지도 →</a>`
+            ? `<a href="${esc(p.naverUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-top:10px;background:#03C75A;color:#fff;text-decoration:none;border-radius:8px;padding:6px 12px;font-size:11.5px;font-weight:700;">네이버 지도 →</a>`
             : '';
           const popup =
-            `<div style="font-family:'Noto Sans KR',sans-serif;min-width:170px;max-width:220px;">` +
-              `<div style="font-size:10px;font-weight:700;color:${color};margin-bottom:2px;">${esc(p.vol)} · ${CATEGORY_META[p.category].emoji} ${CATEGORY_META[p.category].label}</div>` +
-              `<div style="font-size:14px;font-weight:700;color:#1a1a1a;">${esc(p.name)}</div>` +
-              `<div style="font-size:11px;color:#666;margin-top:2px;">${esc(p.oneLiner)}</div>` +
+            `<div style="font-family:'Pretendard',sans-serif;min-width:180px;max-width:230px;">` +
+              `<div style="font-size:11px;font-weight:700;color:${color};">${VOL_LABEL[p.vol]} · ${CATEGORY_META[p.category].label}</div>` +
+              `<div style="font-size:15.5px;font-weight:800;color:#191F28;margin-top:2px;letter-spacing:-0.02em;">${esc(p.name)}</div>` +
+              `<div style="font-size:12px;color:#4E5968;margin-top:3px;line-height:1.5;">${esc(p.oneLiner)}</div>` +
               (menus ? `<div style="margin-top:6px;">${menus}</div>` : '') +
-              (p.hours ? `<div style="font-size:10px;color:#999;margin-top:6px;">🕒 ${esc(p.hours)}</div>` : '') +
+              (p.hours ? `<div style="font-size:10.5px;color:#8B95A1;margin-top:8px;">🕒 ${esc(p.hours)}</div>` : '') +
               naver +
             `</div>`;
-          marker.bindPopup(popup, { maxWidth: 240 });
+          marker.bindPopup(popup, { maxWidth: 250 });
           marker.on('click', () => onSelectPlace(p.id, 'marker'));
           markers.current[p.id] = marker;
         });
@@ -395,7 +499,7 @@
       useEffect(() => {
         const map = mapObj.current;
         if (!map || !selectedId) return;
-        const p      = places.find(x => x.id === selectedId);
+        const p = places.find(x => x.id === selectedId);
         const marker = markers.current[selectedId];
         if (!p || !marker) return;
         map.setView([p.lat, p.lng], Math.max(map.getZoom(), 16), { animate: true });
@@ -405,106 +509,159 @@
       return <div ref={mapEl} style={{ width: '100%', height: '100%' }} />;
     }
 
-    function Sidebar({ places, filter, setFilter, selectedId, onSelectPlace, cardRefs }) {
-      const counts = useMemo(() => ({
-        all:        PLACES.length,
-        restaurant: PLACES.filter(p => p.category === 'restaurant').length,
-        cafe:       PLACES.filter(p => p.category === 'cafe').length,
-      }), []);
-
+    function Banner() {
       return (
-        <aside className="flex flex-col h-full bg-[#FAFAFA] border-r border-gray-200">
+        <div className="banner">
+          <img className="banner__wm" src="assets/white_icon.png" alt="" aria-hidden="true" />
+          <span className="banner__tag">THE NEWCHELIN GUIDE</span>
+          <div className="banner__h">뉴 아이디가 제안하는,<br />믿을 수 있는 미식 큐레이션</div>
+          <div className="banner__s">매달 새로운 맛집·카페를 뉴스레터로 전해요</div>
+        </div>
+      );
+    }
 
-          {/* 헤더 — 오렌지 배너 (모바일에서 숨김) */}
-          <header className="flex-shrink-0 border-b border-gray-200">
-            <div className="hidden md:flex px-5 pt-4 pb-5 flex-col items-center text-center"
-              style={{ background: '#FF6B35' }}>
-              <img
-                src="assets/white_icon.png"
-                alt="뉴슐랭 아이콘"
-                style={{ width: 32, height: 32, marginBottom: 8, filter: 'brightness(0) invert(1)' }}
-              />
-              <h1 style={{
-                fontFamily: "'Poppins', sans-serif",
-                fontWeight: 400, letterSpacing: '0.08em',
-                lineHeight: 1.1, color: '#fff', fontSize: 24,
-              }}>
-                THE NEWCHELIN GUIDE
-              </h1>
-              <p style={{ color: 'rgba(255,255,255,0.82)', fontSize: 12, marginTop: 5 }}>
-                뉴 아이디가 제안하는, 믿을 수 있는 미식 큐레이션
-              </p>
-            </div>
+    function SearchBar({ query, setQuery }) {
+      return (
+        <div className="search">
+          <IconSearch />
+          <input type="text" value={query} onChange={e => setQuery(e.target.value)}
+            placeholder="가게 이름, 메뉴로 찾기" aria-label="가게 검색" />
+          {query && <button className="search__clear" onClick={() => setQuery('')} aria-label="검색어 지우기">×</button>}
+        </div>
+      );
+    }
 
-            {/* 모바일 전용 미니 헤더 */}
-            <div className="flex md:hidden items-center gap-2 px-3 py-2" style={{ background: '#FF6B35' }}>
-              <img src="assets/white_icon.png" alt="뉴슐랭 아이콘"
-                style={{ width: 20, height: 20, filter: 'brightness(0) invert(1)' }} />
-              <span style={{ fontFamily: "'Poppins', sans-serif", color: '#fff', fontSize: 14, fontWeight: 400, letterSpacing: '0.06em' }}>
-                THE NEWCHELIN GUIDE
-              </span>
-            </div>
+    function Chips({ cat, setCat, counts }) {
+      const Item = ({ id, label }) => (
+        <button className={'chip' + (cat===id ? ' chip--on' : '')} onClick={() => setCat(id)}>
+          {label}<b>{counts[id]}</b>
+        </button>
+      );
+      return (
+        <div className="chips">
+          <Item id="all" label="전체" />
+          <Item id="restaurant" label="맛집" />
+          <Item id="cafe" label="카페" />
+        </div>
+      );
+    }
 
-            {/* 필터 */}
-            <div className="flex gap-1.5 px-3 py-2.5 bg-white">
-              <FilterTab active={filter==='all'}        onClick={() => setFilter('all')}>전체 {counts.all}</FilterTab>
-              <FilterTab active={filter==='restaurant'} onClick={() => setFilter('restaurant')}>🍚 맛집 {counts.restaurant}</FilterTab>
-              <FilterTab active={filter==='cafe'}       onClick={() => setFilter('cafe')}>☕ 카페 {counts.cafe}</FilterTab>
-            </div>
-          </header>
+    function PlaceCard({ place, selected, onClick, cardRef }) {
+      const meta = CATEGORY_META[place.category];
+      const color = getColor(place);
+      return (
+        <div ref={cardRef} role="button" tabIndex={0} onClick={onClick}
+          onKeyDown={e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); onClick(); } }}
+          className={'card' + (selected ? ' card--on nc-selected' : '')}>
+          <div className="card__top">
+            <span className="vol-badge" style={{ background: color + '18', color }}>
+              <span className="vol-dot" style={{ background: color }} />{VOL_LABEL[place.vol]}
+            </span>
+            <span className="card__cat">{meta.label}</span>
+          </div>
+          <h3 className="card__name">{place.name}</h3>
+          <p className="card__desc">{place.oneLiner}</p>
 
-          {/* 카드 리스트 */}
-          <div className="flex-1 overflow-y-auto nc-scroll px-3 py-3 space-y-3">
-            {places.length === 0 ? (
-              <div className="text-center text-gray-400 text-sm py-12">해당 카테고리의 장소가 없습니다.</div>
-            ) : (
-              places.map(p => (
-                <PlaceCard
-                  key={p.id} place={p}
-                  selected={p.id === selectedId}
-                  onClick={() => onSelectPlace(p.id, 'card')}
-                  cardRef={el => { cardRefs.current[p.id] = el; }}
-                />
-              ))
+          {place.recommendedMenu?.length > 0 && (
+            <div className="menu">{place.recommendedMenu.map((m,i) => <span key={i}>{m}</span>)}</div>
+          )}
+          {place.address && (
+            <p className="meta"><IconPin /><span>{place.address}</span></p>
+          )}
+          {place.hours && (
+            <p className="meta"><IconClock /><span>{place.hours}</span></p>
+          )}
+
+          <div className="acts">
+            {place.naverUrl && (
+              <a href={place.naverUrl} target="_blank" rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()} className="btn btn--naver">네이버 지도</a>
+            )}
+            {ISSUE_LINKS[place.issue] && (
+              <a href={ISSUE_LINKS[place.issue]} target="_blank" rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()} className="btn btn--news">뉴스레터에서 보기</a>
             )}
           </div>
+        </div>
+      );
+    }
 
-          <footer className="flex-shrink-0 px-4 py-2 border-t border-gray-100 bg-white text-center">
-            <p className="text-[10px] text-gray-400">
-              © NEW ID Co., Ltd. —{' '}
-              <a href="https://page.stibee.com/subscriptions/437650" target="_blank" rel="noopener noreferrer"
-                className="underline hover:text-orange-400">뉴스레터 구독</a>
-              {' '}·{' '}
-              <a href="https://www.its-newid.com/" target="_blank" rel="noopener noreferrer"
-                className="underline hover:text-orange-400">홈페이지</a>
-            </p>
-          </footer>
-        </aside>
+    function List({ places, selectedId, onSelectPlace, cardRefs, hasQuery, onReset }) {
+      if (places.length === 0) {
+        return (
+          <div className="empty">
+            {hasQuery ? '검색 결과가 없어요.' : '이 조건에 맞는 곳이 아직 없어요.'}<br />
+            <button onClick={onReset} style={{ marginTop: 12, color: 'var(--brand)', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 }}>
+              필터 초기화
+            </button>
+          </div>
+        );
+      }
+      return (
+        <>{places.map(p => (
+          <PlaceCard key={p.id} place={p} selected={p.id === selectedId}
+            onClick={() => onSelectPlace(p.id, 'card')}
+            cardRef={el => { cardRefs.current[p.id] = el; }} />
+        ))}</>
+      );
+    }
+
+    function Footer() {
+      return (
+        <footer className="foot">
+          <p>© 2026 by NEW ID Co.,Ltd. ·{' '}
+            <a href="https://page.stibee.com/subscriptions/437650" target="_blank" rel="noopener noreferrer">뉴스레터 구독</a>
+            {' · '}
+            <a href="https://www.its-newid.com/" target="_blank" rel="noopener noreferrer">홈페이지</a>
+          </p>
+        </footer>
       );
     }
 
     function App() {
-      const [filter, setFilter]         = useState('all');
-      const [selectedId, setSelectedId] = useState(null);
+      const [cat, setCat]         = useState('all');
+      const [volFilter, setVol]   = useState('all');
+      const [query, setQuery]     = useState('');
+      const [selectedId, setSel]  = useState(null);
       const cardRefs = useRef({});
+      const mapRef   = useRef(null);
 
+      const q = query.trim().toLowerCase();
       const filtered = useMemo(() => {
-        const list = filter === 'all' ? PLACES : PLACES.filter(p => p.category === filter);
-        return [...list].sort((a, b) => b.issue - a.issue);
-      }, [filter]);
+        let list = PLACES.filter(p =>
+          (cat === 'all' || p.category === cat) &&
+          (volFilter === 'all' || p.vol === volFilter)
+        );
+        if (q) {
+          list = list.filter(p =>
+            (p.name + ' ' + p.oneLiner + ' ' + (p.recommendedMenu||[]).join(' ') + ' ' + (p.address||'')).toLowerCase().includes(q)
+          );
+        }
+        return [...list].sort((a,b) => b.issue - a.issue);
+      }, [cat, volFilter, q]);
 
-      const counts = useMemo(() => ({
-        all:        PLACES.length,
-        restaurant: PLACES.filter(p => p.category === 'restaurant').length,
-        cafe:       PLACES.filter(p => p.category === 'cafe').length,
-      }), []);
+      const counts = useMemo(() => {
+        const base = PLACES.filter(p => volFilter === 'all' || p.vol === volFilter);
+        return {
+          all: base.length,
+          restaurant: base.filter(p => p.category === 'restaurant').length,
+          cafe: base.filter(p => p.category === 'cafe').length,
+        };
+      }, [volFilter]);
+
+      const volCounts = useMemo(() => {
+        const base = PLACES.filter(p => cat === 'all' || p.category === cat);
+        const o = { all: base.length };
+        VOLS.forEach(v => { o[v] = base.filter(p => p.vol === v).length; });
+        return o;
+      }, [cat]);
 
       useEffect(() => {
-        if (selectedId && !filtered.some(p => p.id === selectedId)) setSelectedId(null);
+        if (selectedId && !filtered.some(p => p.id === selectedId)) setSel(null);
       }, [filtered, selectedId]);
 
       const handleSelect = useCallback((id, source) => {
-        setSelectedId(id);
+        setSel(id);
         if (source === 'marker') {
           requestAnimationFrame(() => {
             cardRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -512,64 +669,64 @@
         }
       }, []);
 
+      // 두 필터(카테고리 × Vol)가 충돌해 결과가 0이 되면, 방금 안 누른 쪽을 '전체'로 풀어 빈 화면을 막는다.
+      const chooseVol = useCallback((v) => {
+        setVol(v);
+        if (v !== 'all' && !PLACES.some(p => p.vol === v && (cat === 'all' || p.category === cat))) setCat('all');
+      }, [cat]);
+      const chooseCat = useCallback((c) => {
+        setCat(c);
+        if (c !== 'all' && !PLACES.some(p => p.category === c && (volFilter === 'all' || p.vol === volFilter))) setVol('all');
+      }, [volFilter]);
+
+      const reset = useCallback(() => {
+        setCat('all'); setVol('all'); setQuery(''); setSel(null);
+        if (mapRef.current) mapRef.current.setView([MAP_CENTER.lat, MAP_CENTER.lng], MAP_ZOOM, { animate: true });
+      }, []);
+
       return (
-        <div className="app-root">
+        <div className="app">
+          {/* ── left rail (desktop) ── */}
+          <aside className="rail">
+            <img className="rail__logo" src="assets/orange_icon.png" alt="뉴슐랭" />
+            <button className="rail__btn" title="지도 원위치 · 필터 초기화" onClick={reset}><IconPin /></button>
+            <a className="rail__btn" title="뉴스레터 구독" href="https://page.stibee.com/subscriptions/437650" target="_blank" rel="noopener noreferrer"><IconMail /></a>
+            <div className="rail__spacer" />
+            <a className="rail__btn" title="NEW ID 홈페이지" href="https://www.its-newid.com/" target="_blank" rel="noopener noreferrer"><IconHome /></a>
+          </aside>
 
-          {/* ── 모바일 전용 상단 헤더 (데스크톱 숨김) ── */}
-          <div className="md:hidden flex-shrink-0">
-            <div className="flex items-center gap-2 px-3 py-2" style={{ background: '#FF6B35' }}>
-              <img src="assets/white_icon.png" alt="뉴슐랭 아이콘"
-                style={{ width: 20, height: 20, filter: 'brightness(0) invert(1)' }} />
-              <span style={{ fontFamily: "'Poppins', sans-serif", color: '#fff', fontSize: 14, letterSpacing: '0.06em' }}>
-                THE NEWCHELIN GUIDE
-              </span>
+          {/* ── map stage + line bar ── */}
+          <div className="stage">
+            <div className="map-layer">
+              <MapView places={filtered} selectedId={selectedId} onSelectPlace={handleSelect} mapRef={mapRef} />
             </div>
-            <div className="flex gap-1.5 px-3 py-2 bg-white border-b border-gray-200">
-              <FilterTab active={filter==='all'}        onClick={() => setFilter('all')}>전체 {counts.all}</FilterTab>
-              <FilterTab active={filter==='restaurant'} onClick={() => setFilter('restaurant')}>🍚 맛집 {counts.restaurant}</FilterTab>
-              <FilterTab active={filter==='cafe'}       onClick={() => setFilter('cafe')}>☕ 카페 {counts.cafe}</FilterTab>
+            <LineBar volFilter={volFilter} setVolFilter={chooseVol} volCounts={volCounts} />
+          </div>
+
+          {/* ── floating panel ── */}
+          <section className="panel">
+            <div className="head">
+              <img className="head__logo" src="assets/orange_icon.png" alt="" />
+              <div>
+                <div className="head__name">뉴슐랭</div>
+                <div className="head__tag">강남 맛집·카페 지도 · by NEW ID</div>
+              </div>
             </div>
-          </div>
 
-          {/* ── 지도 (항상 렌더링, 모바일 40vh / 데스크톱 flex-1 full height) ── */}
-          <div className="map-wrap">
-            <MapView places={filtered} selectedId={selectedId} onSelectPlace={handleSelect} />
-          </div>
+            <div className="body nc-scroll">
+              <Banner />
+              <SearchBar query={query} setQuery={setQuery} />
+              <Chips cat={cat} setCat={chooseCat} counts={counts} />
+              <p className="count-line">
+                {volFilter === 'all' ? '전체' : VOL_LABEL[volFilter]} · <b>{filtered.length}곳</b>
+                {q && <span> · “{query}” 검색</span>}
+              </p>
+              <List places={filtered} selectedId={selectedId} onSelectPlace={handleSelect}
+                cardRefs={cardRefs} hasQuery={!!q} onReset={reset} />
+            </div>
 
-          {/* ── 모바일: 카드 리스트 (데스크톱 숨김) ── */}
-          <div className="md:hidden flex-1 min-h-0 overflow-y-auto nc-scroll bg-[#FAFAFA] px-3 py-3 space-y-3">
-            {filtered.length === 0 ? (
-              <div className="text-center text-gray-400 text-sm py-12">해당 카테고리의 장소가 없습니다.</div>
-            ) : (
-              filtered.map(p => (
-                <PlaceCard key={p.id} place={p}
-                  selected={p.id === selectedId}
-                  onClick={() => handleSelect(p.id, 'card')}
-                  cardRef={el => { cardRefs.current[p.id] = el; }}
-                />
-              ))
-            )}
-          </div>
-
-          {/* ── 모바일: 풋터 (데스크톱 숨김) ── */}
-          <footer className="md:hidden flex-shrink-0 px-4 py-2 border-t border-gray-100 bg-white text-center">
-            <p className="text-[10px] text-gray-400">
-              © NEW ID Co., Ltd. —{' '}
-              <a href="https://page.stibee.com/subscriptions/437650" target="_blank" rel="noopener noreferrer"
-                className="underline hover:text-orange-400">뉴스레터 구독</a>
-              {' '}·{' '}
-              <a href="https://www.its-newid.com/" target="_blank" rel="noopener noreferrer"
-                className="underline hover:text-orange-400">홈페이지</a>
-            </p>
-          </footer>
-
-          {/* ── 데스크톱: 왼쪽 사이드패널 (모바일 숨김) ── */}
-          <div className="sidebar-wrap hidden md:flex flex-col">
-            <Sidebar
-              places={filtered} filter={filter} setFilter={setFilter}
-              selectedId={selectedId} onSelectPlace={handleSelect} cardRefs={cardRefs}
-            />
-          </div>
+            <Footer />
+          </section>
         </div>
       );
     }
