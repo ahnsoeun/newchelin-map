@@ -249,6 +249,16 @@
       10: 'https://stibee.com/api/v1.0/emails/share/D-_JkInAShqb8GMj5QZji4agQ1tCLpA',
     };
 
+    // 뉴스레터 링크: place.nlAnchor 가 있으면 해당 문구로 스크롤되는
+    // 텍스트 프래그먼트(#:~:text=)를 붙여 그 식당 블록으로 바로 이동시킨다.
+    // (Stibee 페이지엔 앵커 id가 없어 텍스트 프래그먼트 방식 사용)
+    function newsletterHref(place) {
+      const base = ISSUE_LINKS[place.issue];
+      if (!base) return null;
+      if (!place.nlAnchor) return base;
+      return base + '#:~:text=' + encodeURIComponent(place.nlAnchor);
+    }
+
     const PLACES = [
       {
         id: 'togarashi', name: '토가라시',
@@ -331,6 +341,7 @@
         id: 'hyeonji-sikdang', name: '현지식당',
         category: 'restaurant', vol: 'Vol.03', issue: 10,
         oneLiner: '매일 바뀌는 신선한 반찬의 매력',
+        nlAnchor: '현지식당',
         description: '강남 한복판에 이런 백반집이 아직 남아 있나 싶은, 정 가득한 집밥 맛집. 매일 바뀌는 신선한 반찬과 푸짐한 한 상이 특징.',
         recommendedMenu: ['엄마정식', '갈치구이', 'LA정식'],
         address: '서울 서초구 강남대로 545-15 지하1층',
@@ -587,8 +598,8 @@
               <a href={place.naverUrl} target="_blank" rel="noopener noreferrer"
                 onClick={e => e.stopPropagation()} className="btn btn--naver">네이버 지도</a>
             )}
-            {ISSUE_LINKS[place.issue] && (
-              <a href={ISSUE_LINKS[place.issue]} target="_blank" rel="noopener noreferrer"
+            {newsletterHref(place) && (
+              <a href={newsletterHref(place)} target="_blank" rel="noopener noreferrer"
                 onClick={e => e.stopPropagation()} className="btn btn--news">뉴스레터에서 보기</a>
             )}
           </div>
