@@ -79,7 +79,7 @@
     .map-layer { position: absolute; inset: 0; z-index: 0; }
     .linebar {
       position: absolute; top: 10px; left: 10px; right: 10px; z-index: 10;
-      display: flex; gap: 6px; overflow-x: auto; padding: 4px;
+      display: flex; gap: 4px; overflow-x: auto; padding: 4px;
     }
     .panel {
       position: relative; flex: 1; min-height: 0; z-index: 1;
@@ -215,14 +215,23 @@
     .foot a:hover { color: var(--brand); }
 
     /* ── line badge (subway-style) ── */
+    /* 모바일에서 칩 5개(전체+1~4탄)가 한 줄에 들어가도록 여백을 좁게 잡는다.
+       PC 는 아래 @media (min-width: 768px) 에서 원래 여백으로 되돌린다. */
     .lb {
-      display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; height: 36px; padding: 0 14px;
+      display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; height: 36px; padding: 0 11px;
       background: #fff; border: 1px solid var(--line); border-radius: 999px; cursor: pointer;
       font-family: inherit; font-size: 13px; font-weight: 700; color: var(--ink-2);
       box-shadow: 0 2px 10px rgba(25,31,40,0.08); transition: border-color .15s, color .15s, background .15s;
     }
     .lb:hover { border-color: #d3d8dd; }
     .lb__dot { width: 9px; height: 9px; border-radius: 999px; }
+    /* PC 는 여백이 넉넉하므로 원래 값으로 되돌린다.
+       이 블록은 위 .lb 기본 규칙보다 뒤에 있어야 적용된다(동일 특이성 → 나중 규칙 우선). */
+    @media (min-width: 768px) {
+      .linebar { gap: 6px; }
+      .lb { gap: 6px; padding: 0 14px; }
+    }
+
     .lb__n { font-size: 11px; font-weight: 700; opacity: 0.55; }
     .lb--on { color: #fff; border-color: transparent; }
     .lb:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
@@ -511,6 +520,7 @@
       const mapEl   = useRef(null);
       const mapObj  = useRef(null);
       const markers = useRef({});
+      const didFit  = useRef(false);   // 최초 1회만 전체 핀에 맞춤
 
       useEffect(() => {
         if (!mapEl.current || mapObj.current) return;
@@ -635,6 +645,28 @@
           marker.on('click', () => onSelectPlace(p.id, 'marker'));
           markers.current[p.id] = marker;
         });
+
+        // 최초 로드 시 모든 핀이 한눈에 들어오게 화면을 맞춘다.
+        // PC 는 좌측 레일(64px)+패널(380px)이 지도를 덮으므로 그만큼 왼쪽 여백을 줘야
+        // 핀이 패널 뒤로 숨지 않는다. 상단 여백은 편 탭(linebar) 높이만큼.
+        // invalidateSize() 를 먼저 불러야 지도 크기가 확정된 뒤 계산된다.
+        if (!didFit.current && places.length) {
+          didFit.current = true;
+          const t = setTimeout(() => {
+            if (!mapObj.current) return;
+            mapObj.current.invalidateSize();
+            const pts = places.map(p => [p.lat, p.lng]);
+            pts.push([COMPANY.lat, COMPANY.lng]);
+            const desktop = window.matchMedia('(min-width: 768px)').matches;
+            mapObj.current.fitBounds(window.L.latLngBounds(pts), {
+              paddingTopLeft:     desktop ? window.L.point(478, 72) : window.L.point(28, 62),
+              paddingBottomRight: desktop ? window.L.point(44, 44)  : window.L.point(28, 28),
+              maxZoom: 16,
+              animate: false,
+            });
+          }, 350);
+          return () => clearTimeout(t);
+        }
       }, [places, selectedId]);
 
       useEffect(() => {
