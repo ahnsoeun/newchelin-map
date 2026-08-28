@@ -38,6 +38,11 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+  <!-- MapLibre GL (베이스맵: OpenFreeMap — API 키 없이 무제한) -->
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.1/leaflet-maplibre-gl.js"></script>
+
   <style>
     :root {
       --brand:   #FF6B35;
@@ -473,11 +478,41 @@
         if (!mapEl.current || mapObj.current) return;
         const map = window.L.map(mapEl.current, {
           center: [MAP_CENTER.lat, MAP_CENTER.lng], zoom: MAP_ZOOM, zoomControl: false,
+          maxZoom: 20,
         });
-        window.L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
-          attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · © <a href="https://carto.com/attributions">CARTO</a>',
-          maxZoom: 20, subdomains: 'abcd',
+        const glLayer = window.L.maplibreGL({
+          style: 'https://tiles.openfreemap.org/styles/liberty',
+          attribution: '© <a href="https://openfreemap.org">OpenFreeMap</a> · © <a href="https://www.openmaptiles.org/">OpenMapTiles</a> · © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         }).addTo(map);
+
+        // liberty 기본값 정리: 3D 건물·POI 아이콘을 끄고, 라벨은 한글만 남긴다
+        //  - fill-extrusion(building-3d): 3D 덩어리가 지도를 어지럽힌다
+        //  - poi_*: 파란 지하철·상점 아이콘이 뉴슐랭 주황 마커를 묻는다
+        //  - 기본 라벨은 "Latin\n한글" 2줄이라 한 줄로 줄인다
+        const glMap = glLayer.getMaplibreMap();
+        const tuneBasemap = () => {
+          glMap.getStyle().layers.forEach(l => {
+            try {
+              if (l.type === 'fill-extrusion') {
+                // 끄면 건물 바닥면까지 사라진다. 높이만 0으로 눌러 평면 footprint 로 남긴다
+                glMap.setPaintProperty(l.id, 'fill-extrusion-height', 0);
+                glMap.setPaintProperty(l.id, 'fill-extrusion-base', 0);
+                return;
+              }
+              if (/^poi_/.test(l.id)) {
+                glMap.setLayoutProperty(l.id, 'visibility', 'none');
+                return;
+              }
+              if (l.type !== 'symbol') return;
+              const tf = l.layout && l.layout['text-field'];
+              if (!tf || JSON.stringify(tf).indexOf('nonlatin') === -1) return;
+              glMap.setLayoutProperty(l.id, 'text-field',
+                ['coalesce', ['get', 'name:ko'], ['get', 'name:nonlatin'], ['get', 'name']]);
+            } catch (e) {}
+          });
+        };
+        if (glMap.isStyleLoaded()) tuneBasemap();
+        else glMap.on('load', tuneBasemap);
         window.L.control.zoom({ position: 'bottomright' }).addTo(map);
 
         window.L.marker([COMPANY.lat, COMPANY.lng], {
