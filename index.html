@@ -523,21 +523,40 @@
           attribution: '© <a href="https://openfreemap.org">OpenFreeMap</a> · © <a href="https://www.openmaptiles.org/">OpenMapTiles</a> · © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         }).addTo(map);
 
-        // liberty 기본값 정리: 3D 건물·POI 아이콘을 끄고, 라벨은 한글만 남긴다
-        //  - fill-extrusion(building-3d): 3D 덩어리가 지도를 어지럽힌다
-        //  - poi_*: 파란 지하철·상점 아이콘이 뉴슐랭 주황 마커를 묻는다
-        //  - 기본 라벨은 "Latin\n한글" 2줄이라 한 줄로 줄인다
+        // 베이스맵을 뉴슐랭 핀이 주인공이 되도록 단순화한다.
+        //
+        // 끄는 것 (HIDE_LAYERS):
+        //  - highway-name-*      도로명 라벨(도산대로·학동로…). 가장 큰 시각 소음이었다
+        //  - highway-shield-*    고속도로 번호 표지(88·51·AH1…). 이 지도와 무관
+        //  - road_one_way_arrow* 일방통행 화살표
+        //  - road_shield_us      미국 도로 표지
+        //  - airport             공항 라벨
+        //  - poi_*               파란 지하철·상점 아이콘. 주황 마커를 묻는다
+        //  - water_name_point_label  아파트 단지 수경시설 이름("115동 앞 인공 연못" 등)
+        //
+        // 남기는 것: label_*(동·구 이름), water_name_line_label(한강 등), waterway_line_label
+        //  → 도로명이 사라져도 어디쯤인지 알 수 있어야 한다
+        //
+        // 3D 건물(fill-extrusion)은 끄지 않고 높이를 0으로 눌러 평면 footprint 로 남긴다.
+        // 끄면 건물 바닥면까지 사라져 최대 줌에서 지도가 텅 빈다.
+        //
+        // 기본 라벨은 "Latin\n한글" 2줄이라 한 줄로 줄인다.
+        const HIDE_LAYERS = [
+          'highway-name-path', 'highway-name-minor', 'highway-name-major',
+          'highway-shield-non-us', 'highway-shield-us-interstate',
+          'road_one_way_arrow', 'road_one_way_arrow_opposite', 'road_shield_us',
+          'airport', 'water_name_point_label',
+        ];
         const glMap = glLayer.getMaplibreMap();
         const tuneBasemap = () => {
           glMap.getStyle().layers.forEach(l => {
             try {
               if (l.type === 'fill-extrusion') {
-                // 끄면 건물 바닥면까지 사라진다. 높이만 0으로 눌러 평면 footprint 로 남긴다
                 glMap.setPaintProperty(l.id, 'fill-extrusion-height', 0);
                 glMap.setPaintProperty(l.id, 'fill-extrusion-base', 0);
                 return;
               }
-              if (/^poi_/.test(l.id)) {
+              if (HIDE_LAYERS.indexOf(l.id) !== -1 || /^poi_/.test(l.id)) {
                 glMap.setLayoutProperty(l.id, 'visibility', 'none');
                 return;
               }
