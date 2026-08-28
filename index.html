@@ -232,6 +232,14 @@
       .lb { gap: 6px; padding: 0 14px; }
     }
 
+    /* PC 는 화면이 넓어 칩이 붙어 보이므로 사이 간격을 넉넉히 준다.
+       이 블록은 .linebar / .lb 기본 규칙보다 *뒤*에 있어야 적용된다
+       (동일 특이성 → 나중 규칙 우선). 모바일은 기본값 4px 유지. */
+    @media (min-width: 768px) {
+      .linebar { gap: 10px; }
+      .lb { gap: 6px; padding: 0 14px; }
+    }
+
     .lb__n { font-size: 11px; font-weight: 700; opacity: 0.55; }
     .lb--on { color: #fff; border-color: transparent; }
     .lb:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
