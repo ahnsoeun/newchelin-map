@@ -536,11 +536,6 @@
           center: [MAP_CENTER.lat, MAP_CENTER.lng], zoom: MAP_ZOOM, zoomControl: false,
           maxZoom: 20,
         });
-        const glLayer = window.L.maplibreGL({
-          style: 'https://tiles.openfreemap.org/styles/liberty',
-          attribution: '© <a href="https://openfreemap.org">OpenFreeMap</a> · © <a href="https://www.openmaptiles.org/">OpenMapTiles</a> · © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        }).addTo(map);
-
         // 베이스맵을 뉴슐랭 핀이 주인공이 되도록 단순화한다.
         //
         // 끄는 것 (HIDE_LAYERS):
@@ -565,29 +560,63 @@
           'road_one_way_arrow', 'road_one_way_arrow_opposite', 'road_shield_us',
           'airport', 'water_name_point_label',
         ];
-        const glMap = glLayer.getMaplibreMap();
-        const tuneBasemap = () => {
-          glMap.getStyle().layers.forEach(l => {
+        const FLAT_LABEL = ['coalesce', ['get', 'name:ko'], ['get', 'name:nonlatin'], ['get', 'name']];
+        const isTwoLineLabel = l => {
+          const tf = l.layout && l.layout['text-field'];
+          return !!tf && JSON.stringify(tf).indexOf('nonlatin') !== -1;
+        };
+
+        const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
+        const ATTRIBUTION = '© <a href="https://openfreemap.org">OpenFreeMap</a> · © <a href="https://www.openmaptiles.org/">OpenMapTiles</a> · © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+
+        // 스타일 JSON 을 먼저 받아 고친 뒤 지도에 넘긴다.
+        // 지도를 띄운 다음 고치면 첫 프레임에 3D 건물이 솟았다가 눌리는 게 보인다.
+        const tuneStyleJson = (style) => {
+          style.layers.forEach(l => {
+            if (l.type === 'fill-extrusion') {
+              l.paint = Object.assign({}, l.paint, {
+                'fill-extrusion-height': 0, 'fill-extrusion-base': 0,
+              });
+              return;
+            }
+            if (HIDE_LAYERS.indexOf(l.id) !== -1 || /^poi_/.test(l.id)) {
+              l.layout = Object.assign({}, l.layout, { visibility: 'none' });
+              return;
+            }
+            if (l.type === 'symbol' && isTwoLineLabel(l)) {
+              l.layout = Object.assign({}, l.layout, { 'text-field': FLAT_LABEL });
+            }
+          });
+          return style;
+        };
+
+        // 스타일 JSON 을 못 받았을 때만 쓰는 예전 방식(로드 후 보정).
+        const tuneLoadedMap = (glMap) => {
+          const run = () => glMap.getStyle().layers.forEach(l => {
             try {
               if (l.type === 'fill-extrusion') {
                 glMap.setPaintProperty(l.id, 'fill-extrusion-height', 0);
                 glMap.setPaintProperty(l.id, 'fill-extrusion-base', 0);
-                return;
-              }
-              if (HIDE_LAYERS.indexOf(l.id) !== -1 || /^poi_/.test(l.id)) {
+              } else if (HIDE_LAYERS.indexOf(l.id) !== -1 || /^poi_/.test(l.id)) {
                 glMap.setLayoutProperty(l.id, 'visibility', 'none');
-                return;
+              } else if (l.type === 'symbol' && isTwoLineLabel(l)) {
+                glMap.setLayoutProperty(l.id, 'text-field', FLAT_LABEL);
               }
-              if (l.type !== 'symbol') return;
-              const tf = l.layout && l.layout['text-field'];
-              if (!tf || JSON.stringify(tf).indexOf('nonlatin') === -1) return;
-              glMap.setLayoutProperty(l.id, 'text-field',
-                ['coalesce', ['get', 'name:ko'], ['get', 'name:nonlatin'], ['get', 'name']]);
             } catch (e) {}
           });
+          if (glMap.isStyleLoaded()) run(); else glMap.on('load', run);
         };
-        if (glMap.isStyleLoaded()) tuneBasemap();
-        else glMap.on('load', tuneBasemap);
+
+        let disposed = false;
+        const addBasemap = (style, needsRuntimeTune) => {
+          if (disposed || !mapEl.current) return;
+          const glLayer = window.L.maplibreGL({ style, attribution: ATTRIBUTION }).addTo(map);
+          if (needsRuntimeTune) tuneLoadedMap(glLayer.getMaplibreMap());
+        };
+        fetch(STYLE_URL)
+          .then(r => r.json())
+          .then(s => addBasemap(tuneStyleJson(s), false))
+          .catch(() => addBasemap(STYLE_URL, true));
         window.L.control.zoom({ position: 'bottomright' }).addTo(map);
 
         window.L.marker([COMPANY.lat, COMPANY.lng], {
@@ -602,7 +631,7 @@
         mapObj.current = map;
         if (mapRef) mapRef.current = map;
         setTimeout(() => map.invalidateSize(), 200);
-        return () => { map.remove(); mapObj.current = null; markers.current = {}; };
+        return () => { disposed = true; map.remove(); mapObj.current = null; markers.current = {}; };
       }, []);
 
       useEffect(() => {
