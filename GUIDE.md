@@ -1,7 +1,7 @@
 # 뉴슐랭 맵 운영 가이드
 
 ## 파일 위치
-`/Users/ahnsoeun/Desktop/ai workspace/newid-newsletter/newchelin-map/index.html`
+`/Users/ahnsoeun/Desktop/workspace/newsletter/newchelin-map/index.html`
 
 ---
 
@@ -14,7 +14,7 @@
 
 ---
 
-## 현재 데이터 (Vol.01~03, 총 10곳)
+## 현재 데이터 (Vol.01~04, 총 13곳)
 
 | Vol | 호수 | 가게명 | 카테고리 |
 |-----|------|--------|---------|
@@ -28,14 +28,20 @@
 | Vol.03 | 10호 | 현지식당 | 맛집 |
 | Vol.03 | 10호 | 사랑채 | 맛집 |
 | Vol.03 | 10호 | 박성희가요리하는집 | 맛집 |
+| Vol.04 | 12호 | 에이엔아더 논현점 | 카페 |
+| Vol.04 | 12호 | 현우동 | 맛집 |
+| Vol.04 | 12호 | 더피자스탠드 논현점 | 맛집 |
+
+※ 11호는 뉴슐랭을 싣지 않아 Vol.04가 12호로 건너뛴다.
 
 ---
 
 ## Vol별 핀·UI 색상
-- Vol.01 → 빨강 `#E74C3C`
-- Vol.02 → 파랑 `#3B82F6`
-- Vol.03 → 노랑 `#F59E0B`
-- 새 Vol 추가 시 `VOL_COLORS` 객체에 색상 추가 필요
+- Vol.01 → 빨강 `#E23B3B`
+- Vol.02 → 청록 `#12A594`
+- Vol.03 → 노랑 `#F6A609`
+- Vol.04 → 파랑 `#3B6FE0`
+- 새 Vol 추가 시 `VOL_COLORS` 와 `VOLS` 배열 양쪽에 추가해야 탭이 생긴다
 
 ---
 
@@ -46,6 +52,7 @@ const ISSUE_LINKS = {
   8: 'https://stibee.com/api/v1.0/emails/share/oWNEWkGCBhXlOqQtuAOKTH-3bZ0kELk',   // Vol.01
   9: 'https://stibee.com/api/v1.0/emails/share/do_AFKVMdD0oa6Tx38YA7naFmnXl4n8',   // Vol.02
   10: 'https://stibee.com/api/v1.0/emails/share/D-_JkInAShqb8GMj5QZji4agQ1tCLpA',  // Vol.03
+  12: 'https://stibee.com/api/v1.0/emails/share/EvHe-Ss5SbgS6ZOEwtiUkqe0i0CzyqM',  // Vol.04
 };
 ```
 새 Vol 추가 시 해당 호수의 뉴스레터 공유 링크를 `ISSUE_LINKS`에 추가해야 버튼이 노출됩니다.
